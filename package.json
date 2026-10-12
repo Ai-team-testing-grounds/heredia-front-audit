@@ -1,0 +1,18 @@
+{
+  "name": "heredia-front-audit",
+  "version": "1.0.0",
+  "description": "E2E review of uncommitted frontend changes for Claude Code and Codex — real-browser testing, code review, and an HTML report with a copy-ready fix prompt.",
+  "type": "module",
+  "bin": { "heredia-front-audit": "bin/heredia-front-audit.mjs" },
+  "files": ["bin", "scripts", "src", "skills", ".claude-plugin", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node test/run.mjs",
+    "demo": "node skills/heredia-front-audit/scripts/render-report.mjs examples/demo-run/findings.json",
+    "install-skill": "node bin/heredia-front-audit.mjs"
+  },
+  "engines": { "node": ">=18.17" },
+  "keywords": ["claude-code", "codex", "agent-skills", "e2e", "playwright", "qa", "frontend"],
+  "repository": { "type": "git", "url": "git+https://github.com/YOUR_GITHUB_USER/heredia-front-audit.git" },
+  "license": "MIT"
+}

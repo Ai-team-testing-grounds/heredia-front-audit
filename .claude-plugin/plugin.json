@@ -1,0 +1,10 @@
+{
+  "name": "heredia-front-audit",
+  "version": "1.0.0",
+  "description": "E2E review of uncommitted frontend changes: drives your app in a real browser, reviews the diff, and opens an HTML report with fixes and a copy-ready fix prompt.",
+  "author": { "name": "YOUR_NAME" },
+  "homepage": "https://github.com/YOUR_GITHUB_USER/heredia-front-audit",
+  "repository": "https://github.com/YOUR_GITHUB_USER/heredia-front-audit",
+  "license": "MIT",
+  "keywords": ["e2e", "qa", "frontend", "playwright", "chrome", "code-review", "testing"]
+}

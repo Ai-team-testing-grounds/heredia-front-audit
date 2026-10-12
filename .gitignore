@@ -1,0 +1,5 @@
+node_modules/
+.heredia-front-audit/
+examples/demo-run/report.html
+examples/demo-run/fix-prompt.md
+.DS_Store

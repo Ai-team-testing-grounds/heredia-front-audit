@@ -1,0 +1,14 @@
+{
+  "name": "heredia-front-audit",
+  "description": "heredia-front-audit: E2E review of uncommitted frontend changes for Claude Code",
+  "owner": { "name": "YOUR_NAME" },
+  "plugins": [
+    {
+      "name": "heredia-front-audit",
+      "source": ".",
+      "description": "Type /heredia-front-audit to E2E-review your uncommitted frontend changes in a real browser and get an HTML report with a copy-ready fix prompt.",
+      "category": "testing",
+      "tags": ["e2e", "qa", "frontend", "browser"]
+    }
+  ]
+}

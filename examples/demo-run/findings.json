@@ -1,0 +1,151 @@
+{
+  "agent": "claude-code",
+  "project": "shop-web",
+  "branch": "feat/new-checkout",
+  "commit": "a1b2c3d",
+  "stack": "React 19 + Vite",
+  "baseUrl": "http://localhost:5173",
+  "browser": "playwright-mcp",
+  "summary": "The diff adds a new Checkout page with an email field and a Pay button, and refactors App routing. The happy path renders, but submitting with an empty or invalid email throws in the console and gives the user no feedback, and the Pay button can be double-submitted. Mobile layout overflows horizontally.",
+  "changedFiles": [
+    {
+      "path": "src/App.tsx",
+      "status": "M"
+    },
+    {
+      "path": "src/Checkout.tsx",
+      "status": "??"
+    },
+    {
+      "path": "src/api/orders.ts",
+      "status": "M"
+    }
+  ],
+  "flowsTested": [
+    {
+      "name": "Checkout happy path",
+      "result": "pass",
+      "steps": [
+        "Open /checkout",
+        "Type valid email",
+        "Click Pay"
+      ]
+    },
+    {
+      "name": "Checkout with empty email",
+      "result": "fail",
+      "steps": [
+        "Open /checkout",
+        "Click Pay"
+      ],
+      "notes": "TypeError in console, no inline error"
+    },
+    {
+      "name": "Double click Pay",
+      "result": "fail",
+      "steps": [
+        "Open /checkout",
+        "Type valid email",
+        "Double-click Pay"
+      ],
+      "notes": "Two POST /api/orders requests"
+    },
+    {
+      "name": "Checkout at 375px",
+      "result": "partial",
+      "notes": "Horizontal scroll caused by fixed 420px card width"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "title": "Submitting checkout with an empty email crashes the submit handler",
+      "severity": "high",
+      "category": "functional",
+      "source": "browser",
+      "location": {
+        "file": "src/Checkout.tsx",
+        "line": 31,
+        "url": "/checkout"
+      },
+      "description": "handleSubmit calls email.trim() before validating, but email is undefined until the input is touched, so the handler throws and the user sees nothing.",
+      "reproSteps": [
+        "Open /checkout",
+        "Without typing, click Pay"
+      ],
+      "expected": "Inline error under the email field: 'Enter your email'",
+      "actual": "Nothing happens; TypeError in console",
+      "evidence": {
+        "screenshot": "screenshots/checkout-empty.png",
+        "console": "TypeError: Cannot read properties of undefined (reading 'trim')\n    at handleSubmit (Checkout.tsx:31:22)"
+      },
+      "fix": {
+        "explanation": "Initialise the email state to an empty string and validate before trimming; render the error message under the input with aria-describedby.",
+        "snippet": "const [email, setEmail] = useState(\"\");\n// ...\nif (!email.trim()) { setError(\"Enter your email\"); return; }"
+      }
+    },
+    {
+      "id": "F2",
+      "title": "Pay button can be double-submitted, creating two orders",
+      "severity": "critical",
+      "category": "network",
+      "source": "browser",
+      "location": {
+        "file": "src/Checkout.tsx",
+        "line": 44,
+        "url": "/checkout"
+      },
+      "description": "The button is not disabled while createOrder() is pending, so a double click sends two POST /api/orders requests.",
+      "reproSteps": [
+        "Fill a valid email",
+        "Double-click Pay quickly"
+      ],
+      "expected": "One request; button disabled with a spinner while pending",
+      "actual": "Two POST /api/orders → 201, 201",
+      "fix": {
+        "explanation": "Track an isSubmitting state, disable the button while true, and early-return in handleSubmit if already submitting."
+      }
+    },
+    {
+      "id": "F3",
+      "title": "Checkout card overflows horizontally on mobile",
+      "severity": "medium",
+      "category": "responsive",
+      "source": "browser",
+      "location": {
+        "file": "src/Checkout.tsx",
+        "line": 12,
+        "url": "/checkout"
+      },
+      "description": "The card has a fixed width of 420px, causing horizontal scroll at 375px.",
+      "expected": "Card fits the viewport",
+      "actual": "~45px horizontal scroll",
+      "fix": {
+        "explanation": "Replace width: 420px with width: 100%; max-width: 420px."
+      }
+    },
+    {
+      "id": "F4",
+      "title": "Email input has no accessible label",
+      "severity": "low",
+      "category": "accessibility",
+      "source": "code",
+      "location": {
+        "file": "src/Checkout.tsx",
+        "line": 52
+      },
+      "description": "The input relies on placeholder text only; screen readers announce it as 'edit text'.",
+      "fix": {
+        "explanation": "Add a visible <label htmlFor=\"email\"> or aria-label=\"Email\"."
+      }
+    },
+    {
+      "id": "F5",
+      "title": "Payment failure state could not be tested",
+      "severity": "info",
+      "category": "ux",
+      "source": "browser",
+      "description": "There is no way to force the payments API to fail locally. Consider adding a mock flag so the error path can be verified."
+    }
+  ]
+}
