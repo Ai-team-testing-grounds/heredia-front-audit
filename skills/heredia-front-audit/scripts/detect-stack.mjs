@@ -153,8 +153,16 @@ export function detectStack(dirs) {
     .sort((a, b) => Number(a.includes("asset server")) - Number(b.includes("asset server")));
   urls.clear(); ordered.forEach((u) => urls.add(u));
 
+  // PHP apps are often served by Laragon/Valet/Herd (<folder>.test) or XAMPP/WAMP/MAMP (localhost/<folder>), which leave no trace in files.
+  const php = [...stacks].some((x) => /^(Laravel|Symfony|WordPress|Drupal|PHP|CakePHP|CodeIgniter|Yii|Slim)/.test(x));
+  if (php) for (const dir of dirs) {
+    const name = basename(dir).toLowerCase();
+    urls.add(`http://${name}.test   # guess: Laragon / Valet / Herd`);
+    urls.add(`http://localhost/${basename(dir)}${existsSync(join(dir, "public", "index.php")) ? "/public" : ""}   # guess: XAMPP / WAMP`);
+    urls.add(`http://localhost:8888/${basename(dir)}   # guess: MAMP`);
+  }
   if (!urls.size) notes.push("No dev URL could be inferred — check the README, then ask the user for the URL.");
-  notes.push("Local hosts like Valet/Herd (<folder>.test), MAMP (:8888) or XAMPP (http://localhost/<folder>) won't show up in files — if nothing above answers, ask the user.");
+  notes.push("Local hosts like Laragon/Valet/Herd (<folder>.test), MAMP (:8888) or XAMPP (http://localhost/<folder>) can't be confirmed from files — if nothing listed answers, ask the user for the URL once.");
   return { stacks: [...stacks], urls: [...urls], start: [...start], manifests: [...new Set(manifests)], notes };
 }
 

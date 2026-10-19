@@ -1,7 +1,7 @@
 ---
 name: heredia-front-audit
-description: End-to-end QA of the uncommitted frontend changes in this repo. Reads the git working-tree diff, drives the running app in a real browser (Claude in Chrome or Playwright MCP), reviews the changed code, and opens an HTML report with findings, fixes and a copy-ready fix prompt.
-argument-hint: "[app-url] [extra focus, e.g. 'checkout flow on mobile']"
+description: Auditoría E2E de los cambios de frontend sin commit de este repo. Lee el diff, prueba la app en un navegador real (Claude in Chrome o Playwright MCP), revisa el código y abre un reporte HTML en español con hallazgos, correcciones, la repetición paso a paso de cada flujo y un prompt de corrección listo para copiar.
+argument-hint: "[url-de-la-app] [foco opcional, p. ej. 'formulario de pago en móvil']"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob Bash(git *) Bash(node ${CLAUDE_SKILL_DIR}/scripts/*) Bash(node "${CLAUDE_SKILL_DIR}/scripts/*) Bash(mkdir *) Bash(cp *) Bash(curl -s *) Bash(ls *)
 ---

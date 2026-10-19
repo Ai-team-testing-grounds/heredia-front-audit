@@ -1,313 +1,277 @@
 # heredia-front-audit
 
-**End-to-end review of your uncommitted frontend changes — for Claude Code and Codex.**
+**Auditoría de tus cambios de frontend antes de hacer commit, para Claude Code y Codex.**
 
-Type `/heredia-front-audit` (Claude Code) or `$heredia-front-audit` (Codex) in any repo. Your agent reads what you
-changed but haven't committed, drives the app in a real browser like a picky QA engineer, reviews
-the diff, and opens an HTML report with every problem it found, how to fix it, and a
-**Copy fix prompt** button you paste straight back into the agent.
+Escribes `/heredia-front-audit` (Claude Code) o `$heredia-front-audit` (Codex) en tu proyecto. El
+agente lee lo que cambiaste y todavía no tiene commit, prueba la app en un navegador real como lo
+haría un QA exigente, revisa el código y abre un reporte HTML en español con los problemas
+encontrados, cómo corregirlos, la repetición paso a paso de cada prueba y un botón
+**Copiar prompt de corrección** para pegarle al agente.
 
-![heredia-front-audit report](docs/report-screenshot.png)
+![Reporte de heredia-front-audit](docs/report-screenshot.png)
 
-- **Scoped to your diff** — tests the flows your uncommitted changes touch, not the whole app.
-- **Real browser** — happy paths, edge cases, 375px mobile, console errors, failed or duplicated
-  network calls, basic accessibility, with screenshots of every failure.
-- **Code review too** — race conditions, missing error/loading states, effect deps, XSS, debug code…
-- **One-click fix loop** — tick the findings you want, copy the prompt, paste, re-run to verify.
-- **Read-only** — never edits your source or commits; writes only to `.heredia-front-audit/` (git-ignored automatically).
-- **Any web stack** — React, Next, Vue, Nuxt, Svelte, Angular, Laravel, Symfony, WordPress, plain
-  PHP, Rails, Django, static sites… It detects how to start and reach your app and reviews the
-  code with checks for that stack ([details](#works-with-any-stack)).
-- **Nothing added to your project** — no npm/composer packages. Your machine needs Node.js ≥ 18.17
-  and git (Node runs the skill's small helper scripts, even for PHP projects).
+> **Antes de publicar:** ejecuta una vez `node scripts/set-owner.mjs <usuario-u-organización-de-github> "Tu Nombre"`.
+> Reemplaza los textos `YOUR_GITHUB_USER` / `YOUR_NAME` en todo el repo y borra esta nota.
 
 ---
 
-## Contents
+## En resumen
 
-- [Works with any stack](#works-with-any-stack)
-- [Install for Claude Code](#install-for-claude-code)
-- [Install for Codex](#install-for-codex)
-- [Give the agent a browser](#give-the-agent-a-browser)
-- [Usage](#usage)
-- [The report and the fix loop](#the-report-and-the-fix-loop)
-- [Installer reference](#installer-reference)
-- [Customising](#customising)
-- [How it works](#how-it-works)
-- [Troubleshooting](#troubleshooting)
-- [Development](#development)
+```bash
+# 1. Una sola vez, en cualquier terminal:
+npx github:YOUR_GITHUB_USER/heredia-front-audit
 
-> **Before publishing:** run `node scripts/set-owner.mjs <your-github-user> "Your Name"` once.
-> It fills in the `YOUR_GITHUB_USER` / `YOUR_NAME` placeholders across the repo and removes this note.
+# 2. Cada vez que quieras auditar, en la carpeta de tu proyecto:
+claude          # y dentro escribe:  /heredia-front-audit
+codex           # o, si usas Codex:  $heredia-front-audit
+```
+
+Eso es todo. El reporte se abre solo en tu navegador.
 
 ---
 
-## Works with any stack
+## Contenido
 
-Nothing in the flow is tied to one framework. On every run a helper script inspects the project
-and tells the agent what it's dealing with:
+- [Qué hace](#qué-hace)
+- [Instalación (una sola vez)](#instalación-una-sola-vez)
+- [Uso](#uso)
+- [Según tu tipo de proyecto](#según-tu-tipo-de-proyecto)
+- [El reporte](#el-reporte)
+- [El navegador: Claude Code y Codex](#el-navegador-claude-code-y-codex)
+- [Instalarlo para todo el equipo en un proyecto](#instalarlo-para-todo-el-equipo-en-un-proyecto)
+- [Problemas frecuentes](#problemas-frecuentes)
+- [Para quien mantiene la herramienta](#para-quien-mantiene-la-herramienta)
 
-| It looks at | To learn |
+---
+
+## Qué hace
+
+- **Solo prueba lo que cambiaste**: los flujos que tocan tus cambios sin commit, no toda la app.
+- **Navegador real**: flujo principal, casos límite, vista móvil (375px), errores de consola,
+  llamadas de red fallidas o duplicadas y accesibilidad básica.
+- **Evidencia de lo probado**: una captura después de cada paso. En el reporte, cada flujo tiene un
+  botón **▶ Ver pasos** que reproduce la prueba paso a paso.
+- **Revisión de código**: condiciones de carrera, estados de carga/error faltantes, XSS, CSRF,
+  código de depuración olvidado (`console.log`, `dd()`, `var_dump`…), y más.
+- **Ciclo de corrección**: marcas los hallazgos, copias el prompt, lo pegas en el agente y vuelves a
+  auditar para verificar.
+- **No toca tu código**: nunca edita ni hace commit. Solo escribe en `.heredia-front-audit/`, que se
+  ignora en git automáticamente.
+- **Cualquier stack**: React, Next, Vue, Nuxt, Angular, Svelte, Laravel, Symfony, WordPress, PHP
+  plano, sitios estáticos, Rails, Django… y monolitos con el frontend en una subcarpeta.
+- **No agrega nada a tu proyecto**: no instala paquetes npm ni composer.
+
+## Instalación (una sola vez)
+
+Necesitas:
+
+- **Node.js 18.17 o superior** y **git** (aunque tu proyecto sea PHP: Node solo ejecuta los
+  pequeños scripts de la herramienta). Comprueba con `node -v` y `git --version`.
+- **Claude Code** y/o **Codex** instalados y con sesión iniciada.
+- **Google Chrome** (lo usa el navegador automático).
+
+Luego, en cualquier terminal:
+
+```bash
+npx github:YOUR_GITHUB_USER/heredia-front-audit
+```
+
+Este comando:
+
+1. Instala el comando en cada agente que encuentre (Claude Code y/o Codex), para **todos** tus
+   proyectos.
+2. Le da al agente un navegador (registra **Playwright MCP**). Si ya lo tenías, lo deja igual.
+
+Después **cierra y vuelve a abrir** Claude Code / Codex. Para actualizar a una versión nueva,
+ejecuta el mismo comando otra vez.
+
+<details>
+<summary>Otras formas de instalar</summary>
+
+| Quiero… | Comando |
 |---|---|
-| `package.json`, lockfiles, `angular.json` | JS framework (React, Next, Vue, Nuxt, Svelte/Kit, Angular, Astro, Remix, Gatsby, Solid, jQuery, Alpine, htmx…), package manager, `dev`/`start` scripts and ports |
-| `composer.json`, `artisan`, `bin/console`, `wp-config.php`, `index.php` | PHP stack (Laravel, Livewire, Inertia, Symfony, Twig, WordPress, Drupal, CakePHP, CodeIgniter, Yii, Slim, Magento, plain PHP) and how to serve it |
-| `Gemfile`, `manage.py`, `pyproject.toml`, `*.csproj`, `pom.xml` | Rails, Django, Flask/FastAPI, .NET, Java |
-| `docker-compose.yml`, `.ddev/`, `.lando.yml`, `Makefile` | Containerised/local environments and their ports |
-| `.env` (`APP_URL`, `WP_HOME`, `PORT`, …) | The URL your app actually runs on |
-| The changed files | What kind of UI changed (Blade/Twig templates, Angular templates, JSX, Vue SFCs, styles…) |
+| Solo Claude Code | `npx github:YOUR_GITHUB_USER/heredia-front-audit --claude` |
+| Solo Codex | `npx github:YOUR_GITHUB_USER/heredia-front-audit --codex` |
+| Sin registrar Playwright | agrega `--no-playwright` |
+| Sin npx | `git clone https://github.com/YOUR_GITHUB_USER/heredia-front-audit && node heredia-front-audit/bin/heredia-front-audit.mjs` |
+| Desinstalar | `npx github:YOUR_GITHUB_USER/heredia-front-audit uninstall` |
+| Como plugin de Claude Code | dentro de Claude Code: `/plugin marketplace add YOUR_GITHUB_USER/heredia-front-audit` y luego `/plugin install heredia-front-audit@heredia-front-audit` (no lo combines con el instalador) |
 
-The agent then:
+</details>
 
-- **Finds the right pages** using that stack's routing (`routes/web.php` → controller → view,
-  Angular routes, file-based routes, WordPress templates…).
-- **Gets the app running** — uses your URL, or a detected one that answers, or starts it
-  (`npm run dev`, `ng serve`, `php artisan serve`, `symfony serve`, `php -S`, `docker compose up`,
-  `ddev start`…), including the Vite/Mix asset server for PHP apps when needed. If your app lives
-  on MAMP/XAMPP/Valet/Herd, just pass the URL: `/heredia-front-audit http://my-site.test`.
-- **Reviews the code with stack-specific checks** — e.g. effect deps and hydration for React/Vue,
-  subscriptions and `trackBy` for Angular, unescaped output (`{!! !!}`, `|raw`, `echo` without
-  escaping), CSRF, validation, mass assignment and N+1 queries for PHP.
+## Uso
 
-The browser part is the same everywhere: it tests the rendered pages like a user would.
-
-## Install for Claude Code
-
-**Option A — Installer (recommended: gives you exactly `/heredia-front-audit` in every project)**
-
-```bash
-npx github:YOUR_GITHUB_USER/heredia-front-audit --claude
-```
-
-This copies the skill to `~/.claude/skills/heredia-front-audit/` (respects `CLAUDE_CONFIG_DIR`),
-so `/heredia-front-audit` is available in **every** project on your machine — nothing is added
-to the projects themselves. Re-run the command to update.
-
-**Option B — Plugin marketplace (updates through Claude Code)**
-
-Inside Claude Code:
-
-```text
-/plugin marketplace add YOUR_GITHUB_USER/heredia-front-audit
-/plugin install heredia-front-audit@heredia-front-audit
-```
-
-Plugin skills are namespaced, so the full command is `/heredia-front-audit:heredia-front-audit`;
-plain `/heredia-front-audit` also works as long as no other command uses that name. Update with
-`/plugin marketplace update heredia-front-audit`. Don't use A and B together — pick one.
-
-**Option C — Commit it into one project for your whole team**
-
-```bash
-cd your-app
-npx github:YOUR_GITHUB_USER/heredia-front-audit --claude --project
-git add .claude/skills/heredia-front-audit && git commit -m "Add /heredia-front-audit skill"
-```
-
-## Install for Codex
-
-Codex reads [Agent Skills](https://agentskills.io) from `~/.agents/skills/` (personal) and
-`.agents/skills/` (per repo).
-
-```bash
-npx github:YOUR_GITHUB_USER/heredia-front-audit --codex              # personal: every repo on this machine
-npx github:YOUR_GITHUB_USER/heredia-front-audit --codex --project    # or: into the current repo, then commit .agents/skills/heredia-front-audit
-```
-
-Restart Codex, then type `$heredia-front-audit` (or pick **Heredia Front Audit** from `/skills`). The skill is set to
-explicit-only (`allow_implicit_invocation: false`), so Codex never starts a browser run on its own.
-
-**Both agents at once:** `npx github:YOUR_GITHUB_USER/heredia-front-audit` installs for every agent it
-finds on your machine (Claude Code and/or Codex).
-
-**Without npx:** `git clone https://github.com/YOUR_GITHUB_USER/heredia-front-audit && node heredia-front-audit/bin/heredia-front-audit.mjs [--claude] [--codex]`.
-
----
-
-## Give the agent a browser
-
-The skill works with whichever browser tool your agent has. Without one, it still does the code
-review and tells you in the report how to enable a browser.
-
-| | Claude in Chrome | Playwright MCP |
-|---|---|---|
-| **Agents** | Claude Code | Claude Code **and** Codex |
-| **Setup** | Install the [Claude extension](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn), then start `claude --chrome` (or run `/chrome` → *Enabled by default*) | Claude Code: `claude mcp add --scope user playwright -- npx @playwright/mcp@latest`<br>Codex: `codex mcp add playwright -- npx @playwright/mcp@latest` |
-| **Best for** | Apps behind your login (uses your real Chrome sessions); watching it work | Clean, isolated, repeatable runs; headless; CI |
-| **Notes** | Needs a Claude Pro/Max/Team/Enterprise sign-in via `/login` | Add `--headless` or `--isolated` after `@latest` if you like |
-
-Or let the installer register Playwright for you: `npx github:YOUR_GITHUB_USER/heredia-front-audit --with-playwright`.
-
-If Claude Code has both, the skill prefers Chrome.
-
----
-
-## Usage
-
-Make some frontend changes (don't commit), start your agent in the repo, and run:
+1. Haz tus cambios en el proyecto y **no hagas commit**.
+2. Abre una terminal en la carpeta del proyecto y abre tu agente (`claude` o `codex`).
+3. Escribe el comando:
 
 | | Claude Code | Codex |
 |---|---|---|
-| Basic | `/heredia-front-audit` | `$heredia-front-audit` |
-| Point at the app | `/heredia-front-audit http://localhost:5173` | `$heredia-front-audit http://localhost:5173` |
-| Add focus | `/heredia-front-audit http://localhost:3000 "new checkout form, test on mobile"` | `$heredia-front-audit http://localhost:3000 — focus on the new checkout form on mobile` |
+| Normal | `/heredia-front-audit` | `$heredia-front-audit` |
+| Indicando la URL de la app | `/heredia-front-audit http://localhost:5173` | `$heredia-front-audit http://localhost:5173` |
+| Con un foco | `/heredia-front-audit "el nuevo formulario de pago, en móvil"` | `$heredia-front-audit enfócate en el formulario de pago en móvil` |
 
-What happens:
+Lo que pasa:
 
-1. **Context** — a bundled script collects the branch, `git status`, `git diff HEAD`, untracked
-   files and `package.json` scripts, and creates a run folder.
-2. **Plan** — the agent maps the changed files to the user flows they affect.
-3. **App** — it uses your URL, finds a running dev server on a common port, or starts your
-   `dev` script in the background (and stops it at the end).
-4. **Browser run** — happy paths, edge cases, mobile width, console, network and accessibility
-   checks, with screenshots.
-5. **Code review** — of the diff, for issues a browser can't easily show.
-6. **Report** — writes `findings.json`, renders `report.html` and opens it in your default browser.
+1. **Contexto**: un script reúne la rama, los archivos cambiados y el diff, y crea una carpeta para
+   esta auditoría.
+2. **Plan**: el agente identifica qué pantallas y flujos afectan tus cambios.
+3. **App**: usa tu URL, la de la auditoría anterior, o busca/arranca el servidor de desarrollo (y lo
+   detiene al terminar si lo arrancó él).
+4. **Pruebas en el navegador**, con una captura por paso.
+5. **Revisión del código** cambiado.
+6. **Reporte**: lo genera y lo abre en tu navegador.
 
-Each run writes to your repo:
+Si el agente te pregunta algo (la URL, un usuario de prueba), respóndele en el chat: solo lo
+pregunta una vez.
+
+## Según tu tipo de proyecto
+
+| Tu proyecto | Qué tienes que hacer |
+|---|---|
+| **Frontend independiente** (React, Vue, Angular, Svelte, Vite, Next…) | Nada. Detecta el framework y usa o arranca `npm run dev` / `ng serve`. |
+| **Monolito o monorepo** (el frontend está en `frontend/`, `web/`, `apps/…`) | Nada. Detecta la carpeta de la app a partir de los archivos que cambiaste. Puedes abrir el agente en la raíz del repo. |
+| **Laravel / Symfony** | Si usas `php artisan serve` o `symfony serve`, lo arranca él (y `npm run dev` si las páginas cargan sin CSS/JS). Nunca ejecuta migraciones ni seeders sin preguntar. |
+| **PHP en Laragon, XAMPP, WAMP, MAMP, Valet o Herd** (incluye WordPress) | Prueba las URLs típicas (`http://<carpeta>.test`, `http://localhost/<carpeta>`). Si no la encuentra, pásale la URL la primera vez: `/heredia-front-audit http://mi-proyecto.test`. **Las siguientes veces la recuerda.** |
+| **App con login** | Te pide un usuario de prueba una vez. Con Claude in Chrome usa las sesiones que ya tienes abiertas. |
+
+Para cada stack revisa lo que más suele fallar: dependencias de efectos e hidratación en React/Vue,
+suscripciones en Angular, salida sin escapar (`{!! !!}`, `|raw`, `echo` sin `htmlspecialchars`),
+CSRF, validación, asignación masiva y consultas N+1 en PHP.
+
+## El reporte
+
+- Los hallazgos van ordenados por severidad (**crítico → info**); haz clic en una severidad para
+  filtrar.
+- Cada hallazgo indica dónde está (archivo:línea y página), qué está mal, cómo reproducirlo, qué se
+  esperaba y qué pasó, la salida de consola, una captura y **cómo corregirlo**.
+- **Flujos probados**: cada flujo tiene **▶ Ver pasos**, una repetición de las capturas tomadas
+  después de cada acción, con lo que hizo el agente y si ese paso pasó o falló. Es la evidencia de lo
+  que realmente se probó.
+- Marca los hallazgos que quieres corregir (los que no son "info" vienen marcados), presiona
+  **Copiar prompt de corrección** y pégalo en Claude Code o Codex. Cada hallazgo tiene además su
+  propio botón, y **Ver prompt** muestra exactamente lo que vas a pegar.
+- Después de corregir, vuelve a ejecutar `/heredia-front-audit` para verificar.
+
+Cada auditoría se guarda en tu repo (sin aparecer en `git status`):
 
 ```
-.heredia-front-audit/              ← ignores itself; never shows up in git status
-  latest.html                      ← always the most recent report
+.heredia-front-audit/
+  latest.html                      ← siempre el último reporte
   runs/2026-10-09_17-30-02/
-    findings.json                  ← structured results (source of truth)
-    report.html                    ← self-contained report (screenshots embedded)
-    fix-prompt.md                  ← the same prompt the Copy button gives you
-    screenshots/
+    findings.json                  ← resultados estructurados
+    report.html                    ← reporte autocontenido (capturas incluidas)
+    fix-prompt.md                  ← el mismo prompt que copia el botón
+    screenshots/<flujo>/01-….png   ← una captura por paso
 ```
 
-Headless / CI (with Playwright MCP):
+## El navegador: Claude Code y Codex
+
+El instalador registra **Playwright MCP**, que funciona en los dos agentes y abre su propio Chrome
+limpio. No tienes que hacer nada más.
+
+| | Claude Code | Codex |
+|---|---|---|
+| **Por defecto** | Playwright MCP | Playwright MCP |
+| **Usar tu Chrome con tus sesiones iniciadas** | Sí: instala la [extensión de Claude](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) y abre el agente con `claude --chrome` (o `/chrome` → *Enabled by default*). Si está disponible, la herramienta la prefiere. | Solo en la **app de escritorio** de Codex/ChatGPT, no en la CLI. OpenAI recomienda el navegador integrado de la app para `localhost` ([documentación](https://learn.chatgpt.com/docs/chrome-extension)). |
+
+Si el agente no tiene navegador, igual revisa el código y en el reporte te explica cómo activarlo.
+
+## Instalarlo para todo el equipo en un proyecto
+
+Si prefieres que el comando venga incluido en un repo (para que quien lo clone ya lo tenga):
 
 ```bash
-claude -p "/heredia-front-audit http://localhost:3000"
-codex exec 'Use the $heredia-front-audit skill on http://localhost:3000'
+cd tu-proyecto
+npx github:YOUR_GITHUB_USER/heredia-front-audit --project
+git add .claude/skills/heredia-front-audit .agents/skills/heredia-front-audit
+git commit -m "Agregar /heredia-front-audit"
 ```
 
-## The report and the fix loop
+## Problemas frecuentes
 
-- Findings are sorted by severity (**critical → info**); click a severity chip to filter.
-- Each finding has where it is (file:line and page), what's wrong, steps to reproduce,
-  expected vs. actual, console output, a screenshot, and **how to fix it**.
-- Tick the findings you want fixed (all non-info ones are ticked by default), press
-  **Copy fix prompt**, and paste it into Claude Code or Codex. Each finding also has its own
-  **Copy prompt for F2 only** button, and **Preview prompt** shows exactly what you'll paste.
-- The prompt tells the agent to confirm each root cause before changing anything, make minimal
-  fixes, run your lint, type checks and tests, report what it changed per finding, and remind you
-  to re-run heredia-front-audit to verify.
+**"No uncommitted changes" / no hay cambios**: solo audita lo que no tiene commit. Si ya hiciste
+commit, `git reset --soft HEAD~1` devuelve el último commit a cambios sin commit, sin perder nada.
+
+**No aparece `/heredia-front-audit`**: cierra y vuelve a abrir Claude Code / Codex después de
+instalar. En Codex también puedes buscarlo en `/skills`.
+
+**El agente no tiene navegador**: en Claude Code revisa `/mcp` (debe aparecer `playwright`) o abre
+con `claude --chrome`. En Codex revisa con `codex mcp list`. Si falta, vuelve a ejecutar el
+instalador.
+
+**No encuentra mi app (PHP con Laragon/XAMPP/etc.)**: pásale la URL una vez:
+`/heredia-front-audit http://mi-proyecto.test`. Queda recordada para las siguientes auditorías.
+
+**Codex no puede arrancar o abrir el servidor**: el sandbox de Codex puede bloquearlo. Aprueba el
+comando cuando te lo pida, o arranca tú el servidor y pásale la URL.
+
+**El reporte no se abrió**: ábrelo tú: `.heredia-front-audit/latest.html`.
+
+**Cambios muy grandes**: dale un foco: `/heredia-front-audit "solo la página de configuración"`.
 
 ---
 
-## Installer reference
+## Para quien mantiene la herramienta
 
-```text
-npx github:YOUR_GITHUB_USER/heredia-front-audit [install|uninstall] [--claude] [--codex] [--project] [--with-playwright]
-```
+### Publicarla para el equipo
 
-| Flag | Effect |
+1. `node scripts/set-owner.mjs <usuario-u-organización> "Tu Nombre"` (una vez).
+2. Sube el repo a GitHub. Puede ser privado: `npx github:…` funciona si cada persona tiene acceso al
+   repo con su git (SSH o credenciales de GitHub).
+3. Comparte la sección [En resumen](#en-resumen) con el equipo.
+
+### Personalizar
+
+Las instrucciones del agente están en **`src/`** y son compartidas por los dos agentes:
+
+| Archivo | Qué es |
 |---|---|
-| *(no agent flag)* | Install for every agent detected on this machine (both if none detected) |
-| `--claude` | Claude Code → `~/.claude/skills/heredia-front-audit` |
-| `--codex` | Codex → `~/.agents/skills/heredia-front-audit` |
-| `--project` | Install into the current git repo (`.claude/skills/…`, `.agents/skills/…`) instead of your home folder |
-| `--with-playwright` | Also run `claude mcp add …` / `codex mcp add …` for Playwright MCP |
-| `uninstall` | Remove the skill from the same locations |
+| `src/workflow.md` | El procedimiento de QA (pasos 1–8) y el formato de `findings.json`. Edítalo para agregar los chequeos de tu equipo. |
+| `src/claude-code.md` | Frontmatter de Claude Code y cómo se inyecta el contexto. |
+| `src/codex.md` | Frontmatter de Codex y el paso "ejecuta collect-context primero". |
 
----
+Después de editar ejecuta `npm run build` (regenera `skills/heredia-front-audit/SKILL.md`) y vuelve
+a instalar. El `SKILL.md` de Codex se genera al instalar porque necesita la ruta real.
 
-## Customising
+- Nuevo stack: agrega una regla en `skills/heredia-front-audit/scripts/detect-stack.mjs` y una línea
+  de checklist en el paso 5 de `src/workflow.md`.
+- Diseño y colores del reporte: `skills/heredia-front-audit/templates/report.html`.
+- `HEREDIA_FRONT_AUDIT_MAX_DIFF_LINES` (por defecto `2500`): cuánto diff se incluye antes de truncar.
+- `HEREDIA_FRONT_AUDIT_NO_OPEN=1` o `--no-open`: no abrir el reporte automáticamente.
 
-The instructions live in **`src/`** and are shared by both agents:
-
-| File | What it is |
-|---|---|
-| `src/workflow.md` | The QA procedure (steps 1–8) and the `findings.json` schema — edit this to add your team's checks (design tokens, i18n, analytics events, auth roles…) |
-| `src/claude-code.md` | Claude Code frontmatter + how context is injected (`` !`node …/collect-context.mjs` ``) |
-| `src/codex.md` | Codex frontmatter + "run collect-context first" step |
-
-After editing, run `npm run build` (regenerates `skills/heredia-front-audit/SKILL.md` for Claude Code)
-and reinstall. Codex's `SKILL.md` is generated at install time because it needs the real
-install path.
-
-Other knobs:
-
-- Teach it a new stack: add a rule to `skills/heredia-front-audit/scripts/detect-stack.mjs` (how to
-  recognise it, its URL and start command) and a checklist line to Step 5 of `src/workflow.md`.
-- `HEREDIA_FRONT_AUDIT_MAX_DIFF_LINES` (default `2500`) — how much of the diff is inlined before truncating.
-- `HEREDIA_FRONT_AUDIT_NO_OPEN=1` or `--no-open` — don't open the report automatically.
-- Re-render a report by hand:
-  `node ~/.claude/skills/heredia-front-audit/scripts/render-report.mjs .heredia-front-audit/runs/<run>/findings.json`
-- Report UI: `skills/heredia-front-audit/templates/report.html` (data is injected as JSON).
-
-## How it works
+### Estructura
 
 ```
 heredia-front-audit/
-├── .claude-plugin/
-│   ├── marketplace.json            ← makes this repo a Claude Code plugin marketplace
-│   └── plugin.json                 ← …containing one plugin: this repo
-├── skills/heredia-front-audit/     ← the skill (Claude Code build; the plugin loads it from here)
-│   ├── SKILL.md                    ← GENERATED from src/ by `npm run build`
+├── .claude-plugin/                 ← hace de este repo un marketplace de plugins de Claude Code
+├── skills/heredia-front-audit/     ← el skill
+│   ├── SKILL.md                    ← GENERADO desde src/ con `npm run build`
 │   ├── scripts/
-│   │   ├── collect-context.mjs     ← git diff/status/untracked + stack info → Markdown; creates the run dir
-│   │   ├── detect-stack.mjs        ← framework-agnostic stack / URL / start-command detection
-│   │   └── render-report.mjs       ← findings.json → report.html + fix-prompt.md, opens it
+│   │   ├── collect-context.mjs     ← diff/estado de git + stack → Markdown; crea la carpeta de la auditoría
+│   │   ├── detect-stack.mjs        ← detecta stack, URL y comando de arranque (cualquier framework)
+│   │   └── render-report.mjs       ← findings.json → report.html + fix-prompt.md, y lo abre
 │   └── templates/report.html
-├── src/                            ← single source of truth for the instructions (both agents)
-├── bin/heredia-front-audit.mjs     ← installer (Claude Code + Codex, user or project scope)
-├── scripts/build.mjs               ← builds SKILL.md per agent
-├── scripts/set-owner.mjs           ← one-time: fills in your GitHub user / name
-├── examples/demo-run/              ← sample findings + screenshot (`npm run demo`)
-└── test/run.mjs                    ← smoke tests (`npm test`, runs in CI on Linux/macOS/Windows)
+├── src/                            ← instrucciones (fuente única para los dos agentes)
+├── bin/heredia-front-audit.mjs     ← instalador (Claude Code + Codex + Playwright MCP)
+├── scripts/build.mjs               ← genera SKILL.md por agente
+├── scripts/set-owner.mjs           ← una vez: completa tu usuario de GitHub / nombre
+├── examples/demo-run/              ← datos de ejemplo (`npm run demo`)
+├── frontend/                       ← app de prueba: login + dashboard (`cd frontend && npm run dev`)
+└── test/run.mjs                    ← pruebas (`npm test`, en CI con Linux/macOS/Windows)
 ```
 
-Differences between the two agents are handled for you:
-
-| | Claude Code | Codex |
-|---|---|---|
-| Invoke | `/heredia-front-audit` (or `/heredia-front-audit:heredia-front-audit` as a plugin) | `$heredia-front-audit` or `/skills` |
-| Skill location | `~/.claude/skills/` or `.claude/skills/` (or plugin) | `~/.agents/skills/` or `.agents/skills/` |
-| Context | Injected before the agent reads the skill | Agent runs `collect-context.mjs` as step 0 |
-| Only runs when you ask | `disable-model-invocation: true` | `agents/openai.yaml` → `allow_implicit_invocation: false` |
-| Pre-approved commands | `allowed-tools` (git, the bundled scripts, `curl -s`, `mkdir`, `cp`, `ls`) | Your Codex approval/sandbox settings |
-
-## Troubleshooting
-
-**"No uncommitted changes"** — heredia-front-audit only looks at the working tree vs `HEAD` (staged,
-unstaged and untracked files). If you already committed the work, `git reset --soft HEAD~1`
-puts the last commit back into your working tree without losing anything, then run it again.
-
-**Claude Code: browser tools missing** — start with `claude --chrome` and check `/chrome` shows
-*Status: Enabled*, or add Playwright MCP and check `/mcp`.
-
-**Codex: `$heredia-front-audit` not listed** — restart Codex after installing; check
-`~/.agents/skills/heredia-front-audit/SKILL.md` exists. Confirm Playwright with `codex mcp list`.
-
-**Codex can't start or reach the dev server** — the Codex sandbox may block background
-processes or network access. Approve the command when asked, start the dev server yourself and
-pass its URL (`$heredia-front-audit http://localhost:5173`), or loosen the sandbox for this session.
-
-**Report didn't open** — headless or sandboxed sessions can't open a browser. The path is
-printed; open `.heredia-front-audit/latest.html` yourself.
-
-**Huge diffs** — the diff is truncated at 2,500 lines (configurable); the agent is told to read
-the rest per file. For big refactors, pass a focus: `/heredia-front-audit "only the settings page"`.
-
-**Apps behind a login** — with Claude in Chrome it uses your existing sessions. With Playwright
-MCP, the agent will ask you for test credentials once.
-
-## Development
+### Desarrollo
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USER/heredia-front-audit && cd heredia-front-audit
-npm test                # build check + context, renderer and installer smoke tests (no deps)
-npm run build           # regenerate skills/heredia-front-audit/SKILL.md after editing src/
-npm run demo            # render examples/demo-run into report.html and open it
-node bin/heredia-front-audit.mjs --claude --codex   # install your working copy
-claude --plugin-dir .   # try the plugin build in Claude Code without installing
+npm test                # pruebas sin dependencias
+npm run build           # regenerar SKILL.md después de editar src/
+npm run demo            # generar y abrir el reporte de ejemplo
+node bin/heredia-front-audit.mjs   # instalar tu copia de trabajo
 ```
 
-CI runs `npm test` on Linux, macOS and Windows (Node 18 and 22). Commit the regenerated
-`SKILL.md` along with any `src/` change — CI fails if they're out of sync.
+Haz commit del `SKILL.md` regenerado junto con cualquier cambio en `src/`: CI falla si no coinciden.
 
-## License
+## Licencia
 
 [MIT](LICENSE)

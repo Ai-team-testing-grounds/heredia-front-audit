@@ -19,5 +19,5 @@ for (const f of files) {
 }
 // Drop the "before publishing" note from the README.
 const readme = join(REPO, "README.md");
-writeFileSync(readme, readFileSync(readme, "utf8").replace(/> \*\*Before publishing:\*\*[\s\S]*?\n\n/, ""));
+writeFileSync(readme, readFileSync(readme, "utf8").replace(/> \*\*Antes de publicar:\*\*[\s\S]*?\n\n/, ""));
 console.log("Done. Review with `git diff`, then commit and push.");

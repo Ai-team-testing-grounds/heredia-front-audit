@@ -56,62 +56,68 @@ data.generatedAt ??= new Date().toISOString();
 
 // ---------- embed screenshots ----------
 const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
-for (const f of data.findings) {
-  const shot = f.evidence?.screenshot;
-  if (!shot) continue;
-  const p = isAbsolute(shot) ? shot : join(runDir, shot);
+// Sets obj.screenshotData from obj.screenshot (a path relative to the run dir).
+function embed(obj, label) {
+  if (!obj?.screenshot) return;
+  const p = isAbsolute(obj.screenshot) ? obj.screenshot : join(runDir, obj.screenshot);
   if (existsSync(p) && MIME[extname(p).toLowerCase()]) {
-    f.evidence.screenshotData = `data:${MIME[extname(p).toLowerCase()]};base64,${readFileSync(p).toString("base64")}`;
+    obj.screenshotData = `data:${MIME[extname(p).toLowerCase()]};base64,${readFileSync(p).toString("base64")}`;
   } else {
-    warnings.push(`${f.id}: screenshot not found at ${p}`);
+    warnings.push(`${label}: screenshot not found at ${p}`);
   }
 }
+data.findings.forEach((f) => embed(f.evidence, f.id));
+data.flowsTested.forEach((fl, i) => {
+  fl.steps = (Array.isArray(fl.steps) ? fl.steps : []).map((s) => (typeof s === "string" ? { action: s } : s));
+  fl.steps.forEach((s, j) => embed(s, `flow "${fl.name || i + 1}" step ${j + 1}`));
+});
 
 // ---------- fix prompt ----------
 const AGENTS = {
   "claude-code": { name: "Claude Code", rerun: "/heredia-front-audit" },
   codex: { name: "Codex", rerun: "$heredia-front-audit" },
 };
-const agent = AGENTS[data.agent] || { name: "your coding agent", rerun: "/heredia-front-audit (Claude Code) or $heredia-front-audit (Codex)" };
+const agent = AGENTS[data.agent] || { name: "tu agente de código", rerun: "/heredia-front-audit (Claude Code) o $heredia-front-audit (Codex)" };
 data.agentInfo = agent;
 const rel = (p) => relative(repoRoot, p) || p;
 const clip = (s, n = 700) => (s && s.length > n ? s.slice(0, n) + " …[truncated]" : s);
 
 function findingChunk(f) {
   const loc = f.location || {};
-  const where = [loc.file && `${loc.file}${loc.line ? `:${loc.line}` : ""}`, loc.url && `page ${loc.url}`]
+  const where = [loc.file && `${loc.file}${loc.line ? `:${loc.line}` : ""}`, loc.url && `página ${loc.url}`]
     .filter(Boolean).join(" — ");
   const lines = [`### ${f.id} [${f.severity.toUpperCase()} · ${f.category || "general"}] ${f.title}`];
-  if (where) lines.push(`- Where: ${where}`);
-  if (f.description) lines.push(`- Problem: ${f.description}`);
-  if (f.reproSteps?.length) lines.push(`- Repro: ${f.reproSteps.map((s, i) => `${i + 1}) ${s}`).join(" ")}`);
-  if (f.expected) lines.push(`- Expected: ${f.expected}`);
-  if (f.actual) lines.push(`- Actual: ${f.actual}`);
-  if (f.evidence?.console) lines.push(`- Console: ${clip(f.evidence.console).replace(/\s+/g, " ")}`);
-  if (f.fix?.explanation) lines.push(`- Suggested fix: ${f.fix.explanation}`);
+  if (where) lines.push(`- Dónde: ${where}`);
+  if (f.description) lines.push(`- Problema: ${f.description}`);
+  if (f.reproSteps?.length) lines.push(`- Pasos: ${f.reproSteps.map((s, i) => `${i + 1}) ${s}`).join(" ")}`);
+  if (f.expected) lines.push(`- Esperado: ${f.expected}`);
+  if (f.actual) lines.push(`- Obtenido: ${f.actual}`);
+  if (f.evidence?.console) lines.push(`- Consola: ${clip(f.evidence.console).replace(/\s+/g, " ")}`);
+  if (f.fix?.explanation) lines.push(`- Corrección sugerida: ${f.fix.explanation}`);
   if (f.fix?.snippet) lines.push("```", f.fix.snippet.trimEnd(), "```");
   return lines.join("\n");
 }
 
 const header = [
-  "You are fixing issues found by an automated end-to-end review (heredia-front-audit) of the uncommitted frontend changes in this repo.",
+  "Vas a corregir problemas encontrados por una auditoría E2E automática (heredia-front-audit) de los cambios de frontend sin commit de este repo.",
   "",
-  `Repo: ${data.project || "(unknown)"} · Branch: ${data.branch || "?"} @ ${data.commit || "?"}${data.baseUrl ? ` · App: ${data.baseUrl}` : ""}`,
-  `Full report data: ${rel(findingsPath)}`,
+  `Repo: ${data.project || "(desconocido)"} · Rama: ${data.branch || "?"} @ ${data.commit || "?"}${data.baseUrl ? ` · App: ${data.baseUrl}` : ""}`,
+  `Datos completos del reporte: ${rel(findingsPath)}`,
   "",
-  "Work through the findings below in order (most severe first). For each one:",
-  "1. Read the referenced code and confirm the root cause before changing anything. If you can't reproduce or confirm it, say so and skip it.",
-  "2. Make the smallest correct fix. The suggested fix is a starting point — if you find a better one, use it and explain why.",
-  "3. Don't touch unrelated code and don't commit.",
+  "Revisa los hallazgos de abajo en orden (los más graves primero). Para cada uno:",
+  "1. Lee el código indicado y confirma la causa raíz antes de cambiar nada. Si no puedes reproducirlo o confirmarlo, dilo y pasa al siguiente.",
+  "2. Haz la corrección correcta más pequeña. La corrección sugerida es un punto de partida: si encuentras una mejor, úsala y explica por qué.",
+  "3. No toques código no relacionado y no hagas commit.",
   "",
 ].join("\n");
 
 const footer = [
   "",
-  "When you're done:",
-  "- Run the project's type check, lint and unit tests if they exist (see package.json scripts) and fix anything you broke.",
-  "- Give me a short table: finding ID → what you changed (file:line) or why you didn't.",
-  `- Remind me to run ${agent.rerun} again so the fixes get verified in the browser.`,
+  "Cuando termines:",
+  "- Ejecuta el type check, el lint y los tests del proyecto si existen (revisa los scripts de package.json / composer.json) y corrige lo que hayas roto.",
+  "- Dame una tabla corta: ID del hallazgo → qué cambiaste (archivo:línea) o por qué no lo cambiaste.",
+  "- Respóndeme en español.",
+  `- Recuérdame ejecutar ${agent.rerun} otra vez para verificar las correcciones en el navegador.`,
 ].join("\n");
 
 data.findings.forEach((f) => (f.promptChunk = findingChunk(f)));

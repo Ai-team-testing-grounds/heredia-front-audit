@@ -1,7 +1,7 @@
 ---
 name: heredia-front-audit
-description: End-to-end QA of the uncommitted frontend changes in this repo. Reads the git working-tree diff, drives the running app in a real browser (Claude in Chrome or Playwright MCP), reviews the changed code, and opens an HTML report with findings, fixes and a copy-ready fix prompt.
-argument-hint: "[app-url] [extra focus, e.g. 'checkout flow on mobile']"
+description: Auditoría E2E de los cambios de frontend sin commit de este repo. Lee el diff, prueba la app en un navegador real (Claude in Chrome o Playwright MCP), revisa el código y abre un reporte HTML en español con hallazgos, correcciones, la repetición paso a paso de cada flujo y un prompt de corrección listo para copiar.
+argument-hint: "[url-de-la-app] [foco opcional, p. ej. 'formulario de pago en móvil']"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob Bash(git *) Bash(node ${CLAUDE_SKILL_DIR}/scripts/*) Bash(node "${CLAUDE_SKILL_DIR}/scripts/*) Bash(mkdir *) Bash(cp *) Bash(curl -s *) Bash(ls *)
 ---
@@ -20,6 +20,8 @@ User arguments: `$ARGUMENTS`
 
 If the context above says there are no uncommitted changes or this is not a git repo, tell the
 user and stop.
+
+Talk to the user in Spanish (questions, progress updates and the final reply).
 
 ## Step 1 — Build a test plan from the diff
 
@@ -43,18 +45,23 @@ user and stop.
 This works the same for any stack — JS frameworks, Angular, PHP, Rails, Django, static sites.
 
 - If the user gave a URL (see User arguments above), use it.
-- Otherwise use the **Project stack** section of the context: try each *likely app URL* with
-  `curl -s -o /dev/null -w "%{http_code}" <url>` and use the first that answers (any status
-  below 500 means something is serving). Also try the usual local ports: 3000, 5173, 4200, 8000,
-  8080, 4321, 5000, 8888, 80.
-- If nothing answers, start the app with the first fitting *way to start it* (e.g. `npm run dev`,
+- Otherwise, if the context has an **App URL from the previous run**, try it first.
+- Otherwise use the **Project stack** sections of the context (one per project folder; in a
+  monolith or monorepo, use the folder the changed files belong to): try each *likely app URL*
+  with `curl -s -o /dev/null -w "%{http_code}" <url>` and use the first that answers (any status
+  below 500 except 404 means something is serving — for a `# guess:` URL, also check the page is
+  really this app). Also try the usual local ports: 3000, 5173, 4200, 8000, 8080, 4321, 5000,
+  8888, 80.
+- If nothing answers, start the app with the first fitting *way to start it*, inside the
+  folder that section names (e.g. `npm run dev`,
   `npx ng serve`, `php artisan serve`, `symfony serve -d`, `php -S localhost:8000 -t public`,
   `docker compose up -d`, `ddev start`, `bin/rails server`) **in the background**, wait until it
   answers, and remember that you started it so you can stop it at the end. Server-rendered PHP
   apps with a Vite/Mix front end (Laravel, Symfony Encore) may also need the asset dev server
   (`npm run dev`) running alongside — start both if pages load without CSS/JS.
-- Apps served by MAMP/XAMPP, Valet/Herd (`<folder>.test`), Local, or a shared dev server can't
-  be detected from files: if nothing above works, ask the user for the URL once.
+- Apps served by Laragon, MAMP/XAMPP/WAMP, Valet/Herd (`<folder>.test`), Local, or a shared dev
+  server can't be confirmed from files: if nothing above works, ask the user for the URL once
+  (the next run will remember it).
 - If the app needs credentials, seed data, a database or a `.env`, ask the user once, then
   continue with whatever you can test. Never run migrations or seeders that change data
   without asking.
@@ -82,8 +89,9 @@ If no browser automation is available, do not stop: do the code review (Step 5) 
 For every flow in your plan:
 
 - Drive it like a real user (navigate, click, type, submit). Prefer accessibility-tree
-  snapshots to decide what to click; take a **screenshot at every failure** and at the end
-  state of each flow.
+  snapshots to decide what to click; take a **screenshot right after every step** (the report
+  turns them into a step-by-step replay of the flow, so it is the evidence of what you tested)
+  and at every failure.
 - After each flow, read **console messages** (errors and warnings) and **network requests**
   (any 4xx/5xx, failed or duplicated calls).
 - Re-run the most important flow at **375px wide** (mobile) and check layout, overflow,
@@ -93,7 +101,9 @@ For every flow in your plan:
 - Compare what you see with what the diff *intended* (copy, states, validation messages).
 
 Save screenshots into `<run dir>/screenshots/` (if the browser tool saves them elsewhere, copy
-the file in) and reference them by that relative path (`screenshots/xyz.png`).
+the file in) and reference them by that relative path (`screenshots/xyz.png`). Put each flow's
+step screenshots in their own folder, numbered in order:
+`screenshots/<flow-slug>/01-open-signup.png`, `02-submit-empty.png`, …
 
 Be honest about evidence: a finding from the browser must be something you actually observed.
 
@@ -128,6 +138,12 @@ detected:
 
 ## Step 6 — Write findings.json
 
+**Language:** the report is read by a Spanish-speaking team. Write every human-readable value in
+Spanish: `summary`, flow `name`/`notes`, step `action`/`note`, finding `title`, `description`,
+`reproSteps`, `expected`, `actual` and `fix`. Keep the JSON keys and the enum values
+(`severity`, `category`, `source`, `result`, `status`, `browser`) exactly as shown, in English.
+Code, file paths and console output stay as they are.
+
 Write `<run dir>/findings.json` with exactly this shape (omit optional fields you don't have):
 
 ```json
@@ -143,7 +159,12 @@ Write `<run dir>/findings.json` with exactly this shape (omit optional fields yo
   "changedFiles": [{ "path": "src/x.tsx", "status": "M | A | D | ??" }],
   "flowsTested": [
     { "name": "Sign up with invalid email", "result": "pass | fail | partial | skipped",
-      "steps": ["Open /signup", "Type 'abc'", "Submit"], "notes": "optional" }
+      "steps": [
+        { "action": "Open /signup", "screenshot": "screenshots/signup-invalid/01-open.png" },
+        { "action": "Type 'abc' and submit", "screenshot": "screenshots/signup-invalid/02-submit.png",
+          "result": "fail", "note": "No inline error shown" }
+      ],
+      "notes": "optional" }
   ],
   "findings": [
     {
@@ -167,6 +188,10 @@ Write `<run dir>/findings.json` with exactly this shape (omit optional fields yo
 }
 ```
 
+Each step is `action` (what you did), `screenshot` (taken right after it), and optionally
+`result` (`pass | fail`) and `note` (what you saw). A plain string is accepted for a step you
+could not screenshot.
+
 Severity guide: **critical** = flow broken / data loss / security; **high** = feature works
 wrong for common input; **medium** = edge case or noticeable UX/a11y problem; **low** = polish;
 **info** = notes and things you could not test. Every non-info finding must have a `fix`.
@@ -186,6 +211,6 @@ open a browser (e.g. sandboxed), just give the user the report path.
 ## Step 8 — Wrap up
 
 - Stop the dev server if you started it.
-- Reply with: the verdict in one line, counts by severity, the top 3 findings (one line each),
+- Reply in Spanish with: the verdict in one line, counts by severity, the top 3 findings (one line each),
   and the report path. Tell the user they can press **Copy fix prompt** in the report, paste it
   into Claude Code, then run `/heredia-front-audit` again to verify.

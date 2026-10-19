@@ -1,53 +1,59 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>heredia-front-audit report</title>
+<title>Reporte heredia-front-audit</title>
 <style>
+  /* Paleta: carmesí #A71730, dorado #F1C201 / #FFDE00, negro #26241B */
   :root {
-    --bg: #f6f5f1; --panel: #ffffff; --ink: #1b1d21; --muted: #646a73; --line: #e2e0d9;
-    --accent: #2f5bd3; --code-bg: #f0eee8;
-    --critical: #b42318; --critical-bg: #fde8e6;
-    --high: #c4520a; --high-bg: #fdeedd;
-    --medium: #8a6a00; --medium-bg: #fbf3d5;
+    --bg: #f8f5ef; --panel: #ffffff; --ink: #26241b; --muted: #6b6459; --line: #e6dfd3;
+    --accent: #a71730; --accent-ink: #ffffff; --gold: #f1c201; --brand: #a71730; --brand-ink: #ffffff; --brand-eyebrow: #ffde00;
+    --code-bg: #f3eee5;
+    --critical: #c4141c; --critical-bg: #fde4e2;
+    --high: #b54708; --high-bg: #fdecd9;
+    --medium: #7a5c00; --medium-bg: #fcf1c4;
     --low: #2d6a4f; --low-bg: #e3f2ea;
     --info: #4b5563; --info-bg: #eceef1;
-    --pass: #2d6a4f; --fail: #b42318; --partial: #8a6a00; --skipped: #646a73;
+    --pass: #2d6a4f; --fail: #c4141c; --partial: #7a5c00; --skipped: #6b6459;
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
     --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #121417; --panel: #1a1d22; --ink: #e8e9ec; --muted: #9aa1ab; --line: #2a2f37;
-      --accent: #7aa2ff; --code-bg: #22262d;
-      --critical: #ff8a80; --critical-bg: #3a1d1b;
+      --bg: #161213; --panel: #201a1b; --ink: #f1ece6; --muted: #a89e98; --line: #3a2f30;
+      --accent: #f1c201; --accent-ink: #26241b; --gold: #f1c201; --brand: #7f1024; --brand-ink: #ffffff; --brand-eyebrow: #ffde00;
+      --code-bg: #2a2223;
+      --critical: #ff8a80; --critical-bg: #3d1a1c;
       --high: #ffb074; --high-bg: #3a2715;
       --medium: #f2d16b; --medium-bg: #332b12;
       --low: #7fd1a8; --low-bg: #16301f;
-      --info: #b8bfc9; --info-bg: #262a31;
-      --pass: #7fd1a8; --fail: #ff8a80; --partial: #f2d16b; --skipped: #9aa1ab;
+      --info: #b8bfc9; --info-bg: #2a2627;
+      --pass: #7fd1a8; --fail: #ff8a80; --partial: #f2d16b; --skipped: #a89e98;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--sans); }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 120px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px 120px; }
   code, pre, .mono { font-family: var(--mono); font-size: 13px; }
   a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
-  header .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-  header h1 { margin: 8px 0 6px; font-size: 28px; letter-spacing: -.01em; }
-  .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font: 13px var(--mono); }
-  .summary { margin: 20px 0; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; }
+  .brand { background: var(--brand); color: var(--brand-ink); border-bottom: 4px solid var(--gold); }
+  .brand header { max-width: 1040px; margin: 0 auto; padding: 28px 16px 22px; }
+  header .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brand-eyebrow); }
+  header h1 { margin: 10px 0 8px; font-size: 28px; letter-spacing: -.01em; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: rgba(255,255,255,.85); font: 13px var(--mono); }
+  .summary { margin: 24px 0 20px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 8px; }
 
   .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line);
           background: var(--panel); cursor: pointer; font: 600 13px var(--sans); color: var(--ink); }
   .chip b { font-family: var(--mono); }
-  .chip[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .chip[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
   .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
 
-  h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 36px 0 12px; }
+  h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: 36px 0 12px; }
 
   .finding { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
   .finding.hidden { display: none; }
@@ -75,8 +81,8 @@
 
   button.btn { font: 600 13px var(--sans); padding: 8px 14px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
   button.btn:hover { border-color: var(--muted); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  @media (prefers-color-scheme: dark) { button.primary { color: #0d1117; } }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.primary:hover { border-color: var(--gold); }
 
   table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
@@ -88,17 +94,28 @@
   .files li { padding: 2px 0; break-inside: avoid; }
   .files .st { display: inline-block; width: 26px; color: var(--muted); }
 
-  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0,0,0,.06); }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 3px solid var(--gold); box-shadow: 0 -6px 20px rgba(0,0,0,.06); }
   .bar .inner { max-width: 1040px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .bar .count { color: var(--muted); font-size: 13px; margin-right: auto; }
   .toast { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .toast.show { opacity: 1; }
   dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); width: min(900px, 94vw); padding: 0; }
   dialog::backdrop { background: rgba(0,0,0,.45); }
-  dialog .d-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  dialog .d-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
   dialog pre { margin: 0; border-radius: 0; max-height: 70vh; overflow: auto; }
   .lightbox img { max-width: 100%; display: block; }
   .empty { padding: 28px; text-align: center; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  .replay { margin-top: 8px; }
+  .player .stage { background: var(--code-bg); display: grid; place-items: center; min-height: 240px; }
+  .player .stage img { max-width: 100%; max-height: 62vh; display: block; }
+  .player .stage .noshot { color: var(--muted); font-size: 13px; padding: 40px 16px; }
+  .player .cap { padding: 12px 16px 4px; }
+  .player .cap .note { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .player .ctl { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; }
+  .player .dots { display: flex; flex-wrap: wrap; gap: 5px; margin-left: auto; }
+  .player .dots button { width: 10px; height: 10px; padding: 0; border-radius: 50%; border: 0; background: var(--line); cursor: pointer; }
+  .player .dots button.on { background: var(--accent); }
+  .player .dots button.fail { box-shadow: 0 0 0 2px var(--fail); }
   @media (max-width: 640px) {
     .f-body { padding-left: 16px; }
     .f-body dl { grid-template-columns: 1fr; }
@@ -107,66 +124,86 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="brand">
   <header>
-    <div class="eyebrow">heredia-front-audit · E2E review of uncommitted changes</div>
+    <div class="eyebrow">heredia-front-audit · Auditoría E2E de cambios sin commit</div>
     <h1 id="title"></h1>
     <div class="meta" id="meta"></div>
   </header>
+</div>
+<div class="wrap">
   <div class="summary" id="summary"></div>
   <div class="counts" id="counts"></div>
 
-  <h2>Findings</h2>
+  <h2>Hallazgos</h2>
   <div id="findings"></div>
 
-  <h2>Flows tested</h2>
+  <h2>Flujos probados</h2>
   <div id="flows"></div>
 
-  <h2>Changed files</h2>
+  <h2>Archivos modificados</h2>
   <ul class="files" id="files"></ul>
 </div>
 
 <div class="bar"><div class="inner">
   <span class="count" id="selcount"></span>
-  <button class="btn" id="selAll">Select all</button>
-  <button class="btn" id="selNone">Select none</button>
-  <button class="btn" id="preview">Preview prompt</button>
-  <button class="btn primary" id="copy">Copy fix prompt</button>
+  <button class="btn" id="selAll">Seleccionar todo</button>
+  <button class="btn" id="selNone">Quitar selección</button>
+  <button class="btn" id="preview">Ver prompt</button>
+  <button class="btn primary" id="copy">Copiar prompt de corrección</button>
 </div></div>
 <div class="toast" id="toast"></div>
 
 <dialog id="promptDlg">
-  <div class="d-head"><strong id="dlgTitle">Fix prompt</strong>
-    <span><button class="btn primary" id="copy2">Copy</button> <button class="btn" id="close">Close</button></span></div>
+  <div class="d-head"><strong id="dlgTitle">Prompt de corrección</strong>
+    <span><button class="btn primary" id="copy2">Copiar</button> <button class="btn" id="close">Cerrar</button></span></div>
   <pre id="promptText"></pre>
 </dialog>
 <dialog id="imgDlg" class="lightbox"></dialog>
+<dialog id="playDlg" class="player">
+  <div class="d-head"><strong id="playTitle"></strong><button class="btn" id="playClose">Cerrar</button></div>
+  <div class="stage" id="playStage"></div>
+  <div class="cap"><span class="mono" id="playCount"></span> <span class="res" id="playRes"></span>
+    <div id="playAction"></div><div class="note" id="playNote"></div></div>
+  <div class="ctl">
+    <button class="btn" id="playPrev" aria-label="Paso anterior">←</button>
+    <button class="btn primary" id="playToggle">Pausar</button>
+    <button class="btn" id="playNext" aria-label="Paso siguiente">→</button>
+    <div class="dots" id="playDots"></div>
+  </div>
+</dialog>
 
 <script>
 const DATA = /*__HEREDIA_FRONT_AUDIT_DATA__*/null;
 const SEV = ["critical", "high", "medium", "low", "info"];
+// findings.json keeps English enum values; these are the Spanish labels shown on screen.
+const SEV_ES = { critical: "crítico", high: "alto", medium: "medio", low: "bajo", info: "info" };
+const CAT_ES = { functional: "funcional", visual: "visual", responsive: "responsive", accessibility: "accesibilidad", console: "consola",
+  network: "red", performance: "rendimiento", "code-quality": "calidad de código", ux: "UX" };
+const RES_ES = { pass: "aprobado", fail: "falló", partial: "parcial", skipped: "omitido" };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const $ = (id) => document.getElementById(id);
+const agentName = (DATA.agentInfo || {}).name || "tu agente de código";
 const selected = new Set(DATA.findings.filter((f) => f.severity !== "info").map((f) => f.id));
 let filter = null;
 
-$("title").textContent = DATA.project ? `${DATA.project}` : "heredia-front-audit report";
-document.title = `heredia-front-audit · ${DATA.project || "report"}`;
+$("title").textContent = DATA.project || "Reporte heredia-front-audit";
+document.title = `heredia-front-audit · ${DATA.project || "reporte"}`;
 $("meta").innerHTML = [
-  DATA.branch && `branch <b>${esc(DATA.branch)}</b>${DATA.commit ? " @ " + esc(DATA.commit) : ""}`,
+  DATA.branch && `rama <b>${esc(DATA.branch)}</b>${DATA.commit ? " @ " + esc(DATA.commit) : ""}`,
   DATA.baseUrl && `app ${esc(DATA.baseUrl)}`,
   DATA.stack && `stack ${esc(DATA.stack)}`,
-  DATA.agentInfo && DATA.agent && `agent ${esc(DATA.agentInfo.name)}`,
-  `browser ${esc(DATA.browser || "none")}`,
-  `generated ${esc(new Date(DATA.generatedAt).toLocaleString())}`,
+  DATA.agentInfo && DATA.agent && `agente ${esc(DATA.agentInfo.name)}`,
+  `navegador ${esc(DATA.browser || "ninguno")}`,
+  `generado ${esc(new Date(DATA.generatedAt).toLocaleString("es-PE"))}`,
 ].filter(Boolean).map((s) => `<span>${s}</span>`).join("");
-$("summary").textContent = DATA.summary || "No summary provided.";
+$("summary").textContent = DATA.summary || "Sin resumen.";
 
 function renderCounts() {
   $("counts").innerHTML = SEV.map((s) => {
     const n = DATA.findings.filter((f) => f.severity === s).length;
     return `<button class="chip" data-sev="${s}" aria-pressed="${filter === s}">
-      <span class="dot" style="background:var(--${s})"></span>${s} <b>${n}</b></button>`;
+      <span class="dot" style="background:var(--${s})"></span>${SEV_ES[s]} <b>${n}</b></button>`;
   }).join("");
   document.querySelectorAll(".chip").forEach((c) => c.onclick = () => {
     filter = filter === c.dataset.sev ? null : c.dataset.sev;
@@ -176,42 +213,42 @@ function renderCounts() {
 
 function findingHTML(f) {
   const loc = f.location || {};
-  const where = [loc.file && `<code>${esc(loc.file)}${loc.line ? ":" + esc(loc.line) : ""}</code>`, loc.url && `page <code>${esc(loc.url)}</code>`].filter(Boolean).join(" · ");
+  const where = [loc.file && `<code>${esc(loc.file)}${loc.line ? ":" + esc(loc.line) : ""}</code>`, loc.url && `página <code>${esc(loc.url)}</code>`].filter(Boolean).join(" · ");
   const ev = f.evidence || {};
   const rows = [
-    where && ["Where", where],
-    f.description && ["Problem", esc(f.description)],
-    f.reproSteps?.length && ["Repro", `<ol>${f.reproSteps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`],
-    f.expected && ["Expected", esc(f.expected)],
-    f.actual && ["Actual", esc(f.actual)],
-    ev.console && ["Console", `<pre>${esc(ev.console)}</pre>`],
+    where && ["Dónde", where],
+    f.description && ["Problema", esc(f.description)],
+    f.reproSteps?.length && ["Pasos", `<ol>${f.reproSteps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>`],
+    f.expected && ["Esperado", esc(f.expected)],
+    f.actual && ["Obtenido", esc(f.actual)],
+    ev.console && ["Consola", `<pre>${esc(ev.console)}</pre>`],
   ].filter(Boolean);
   return `
   <article class="finding${f.severity === "critical" || f.severity === "high" ? " open" : ""}" data-id="${esc(f.id)}" data-sev="${f.severity}">
     <div class="f-head">
-      <input type="checkbox" aria-label="Include ${esc(f.id)} in fix prompt" ${selected.has(f.id) ? "checked" : ""}>
+      <input type="checkbox" aria-label="Incluir ${esc(f.id)} en el prompt de corrección" ${selected.has(f.id) ? "checked" : ""}>
       <div>
         <div class="f-title">${esc(f.title)}</div>
         <div class="f-tags">
-          <span class="tag sev-${f.severity}">${f.severity}</span>
-          ${f.category ? `<span class="tag">${esc(f.category)}</span>` : ""}
-          ${f.source ? `<span class="tag">${f.source === "browser" ? "seen in browser" : "code review"}</span>` : ""}
+          <span class="tag sev-${f.severity}">${SEV_ES[f.severity]}</span>
+          ${f.category ? `<span class="tag">${esc(CAT_ES[f.category] || f.category)}</span>` : ""}
+          ${f.source ? `<span class="tag">${f.source === "browser" ? "visto en el navegador" : "revisión de código"}</span>` : ""}
         </div>
       </div>
       <span class="f-id">${esc(f.id)}</span>
     </div>
     <div class="f-body">
       <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
-      ${ev.screenshotData ? `<img class="shot" src="${ev.screenshotData}" alt="Screenshot for ${esc(f.id)}">` : (ev.screenshot ? `<div class="mono" style="color:var(--muted)">screenshot: ${esc(ev.screenshot)} (missing)</div>` : "")}
-      ${f.fix ? `<div class="fix"><div class="fix-label">How to fix</div>
+      ${ev.screenshotData ? `<img class="shot" src="${ev.screenshotData}" alt="Captura de ${esc(f.id)}">` : (ev.screenshot ? `<div class="mono" style="color:var(--muted)">captura: ${esc(ev.screenshot)} (no encontrada)</div>` : "")}
+      ${f.fix ? `<div class="fix"><div class="fix-label">Cómo corregirlo</div>
         <div>${esc(f.fix.explanation || "")}</div>${f.fix.snippet ? `<pre>${esc(f.fix.snippet)}</pre>` : ""}</div>` : ""}
-      <div class="row-actions"><button class="btn copy-one">Copy prompt for ${esc(f.id)} only</button></div>
+      <div class="row-actions"><button class="btn copy-one">Copiar prompt solo de ${esc(f.id)}</button></div>
     </div>
   </article>`;
 }
 
 function renderFindings() {
-  if (!DATA.findings.length) { $("findings").innerHTML = `<div class="empty">No findings — the changes behaved as expected in everything that was tested.</div>`; return; }
+  if (!DATA.findings.length) { $("findings").innerHTML = `<div class="empty">Sin hallazgos: los cambios funcionaron como se esperaba en todo lo que se probó.</div>`; return; }
   $("findings").innerHTML = DATA.findings.map(findingHTML).join("");
   document.querySelectorAll(".finding").forEach((el) => {
     const id = el.dataset.id;
@@ -229,15 +266,60 @@ function applyFilter() {
 }
 
 function renderFlows() {
-  if (!DATA.flowsTested.length) { $("flows").innerHTML = `<div class="empty">No browser flows were run.</div>`; return; }
-  $("flows").innerHTML = `<table><thead><tr><th>Flow</th><th>Result</th><th>Steps / notes</th></tr></thead><tbody>${
-    DATA.flowsTested.map((fl) => `<tr><td>${esc(fl.name)}</td><td class="res res-${esc(fl.result)}">${esc(fl.result)}</td>
-      <td>${fl.steps?.length ? esc(fl.steps.join(" → ")) : ""}${fl.notes ? `<div style="color:var(--muted)">${esc(fl.notes)}</div>` : ""}</td></tr>`).join("")
+  if (!DATA.flowsTested.length) { $("flows").innerHTML = `<div class="empty">No se ejecutaron flujos en el navegador.</div>`; return; }
+  $("flows").innerHTML = `<table><thead><tr><th>Flujo</th><th>Resultado</th><th>Pasos / notas</th></tr></thead><tbody>${
+    DATA.flowsTested.map((fl, i) => {
+      const shots = fl.steps.filter((s) => s.screenshotData).length;
+      return `<tr><td>${esc(fl.name)}</td><td class="res res-${esc(fl.result)}">${esc(RES_ES[fl.result] || fl.result)}</td>
+      <td>${esc(fl.steps.map((s) => s.action).join(" → "))}${fl.notes ? `<div style="color:var(--muted)">${esc(fl.notes)}</div>` : ""}
+      ${shots ? `<div class="replay"><button class="btn" data-flow="${i}">▶ Ver ${fl.steps.length} paso${fl.steps.length > 1 ? "s" : ""}</button></div>` : ""}</td></tr>`;
+    }).join("")
   }</tbody></table>`;
+  document.querySelectorAll("[data-flow]").forEach((b) => b.onclick = () => openReplay(DATA.flowsTested[b.dataset.flow]));
 }
 
+// ---------- step replay: auto-advancing slideshow of a flow's screenshots ----------
+let play = { flow: null, i: 0, timer: null };
+function showStep(i) {
+  const steps = play.flow.steps;
+  play.i = Math.max(0, Math.min(i, steps.length - 1));
+  const s = steps[play.i];
+  $("playStage").innerHTML = s.screenshotData
+    ? `<img src="${s.screenshotData}" alt="${esc(`Paso ${play.i + 1}: ${s.action}`)}">`
+    : `<div class="noshot">Sin captura para este paso</div>`;
+  $("playCount").textContent = `Paso ${play.i + 1}/${steps.length}`;
+  $("playRes").textContent = RES_ES[s.result] || s.result || "";
+  $("playRes").className = `res res-${s.result || ""}`;
+  $("playAction").textContent = s.action || "";
+  $("playNote").textContent = s.note || "";
+  $("playDots").innerHTML = steps.map((st, j) =>
+    `<button class="${j === play.i ? "on" : ""} ${st.result === "fail" ? "fail" : ""}" aria-label="Ir al paso ${j + 1}"></button>`).join("");
+  $("playDots").querySelectorAll("button").forEach((d, j) => d.onclick = () => { stopPlay(); showStep(j); });
+}
+function stopPlay() { clearInterval(play.timer); play.timer = null; $("playToggle").textContent = "Reproducir"; }
+function startPlay() {
+  if (play.i >= play.flow.steps.length - 1) showStep(0);
+  $("playToggle").textContent = "Pausar";
+  play.timer = setInterval(() => { showStep(play.i + 1); if (play.i >= play.flow.steps.length - 1) stopPlay(); }, 2200);
+}
+function openReplay(flow) {
+  play.flow = flow;
+  $("playTitle").textContent = `${flow.name} — ${RES_ES[flow.result] || flow.result || ""}`;
+  showStep(0); $("playDlg").showModal(); stopPlay(); startPlay();
+}
+$("playPrev").onclick = () => { stopPlay(); showStep(play.i - 1); };
+$("playNext").onclick = () => { stopPlay(); showStep(play.i + 1); };
+$("playToggle").onclick = () => (play.timer ? stopPlay() : startPlay());
+$("playClose").onclick = () => $("playDlg").close();
+$("playDlg").addEventListener("close", stopPlay);
+$("playDlg").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") $("playPrev").click();
+  else if (e.key === "ArrowRight") $("playNext").click();
+  else if (e.key === " ") { e.preventDefault(); $("playToggle").click(); }
+});
+
 function renderFiles() {
-  $("files").innerHTML = DATA.changedFiles.map((f) => `<li><span class="st">${esc(f.status || "")}</span>${esc(f.path)}</li>`).join("") || "<li>(none listed)</li>";
+  $("files").innerHTML = DATA.changedFiles.map((f) => `<li><span class="st">${esc(f.status || "")}</span>${esc(f.path)}</li>`).join("") || "<li>(ninguno)</li>";
 }
 
 function buildPrompt(ids) {
@@ -246,7 +328,7 @@ function buildPrompt(ids) {
 }
 
 function updateCount() {
-  $("selcount").textContent = `${selected.size} of ${DATA.findings.length} findings selected for the fix prompt`;
+  $("selcount").textContent = `${selected.size} de ${DATA.findings.length} hallazgos seleccionados para el prompt`;
   $("copy").disabled = selected.size === 0;
 }
 
@@ -256,7 +338,7 @@ async function copy(text) {
     const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
     ta.select(); document.execCommand("copy"); ta.remove();
   }
-  const t = $("toast"); t.textContent = `Copied — paste it into ${(DATA.agentInfo || {}).name || "your coding agent"}`; t.classList.add("show");
+  const t = $("toast"); t.textContent = `Copiado: pégalo en ${agentName}`; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 1800);
 }
 
@@ -270,7 +352,7 @@ const syncBoxes = () => document.querySelectorAll(".finding").forEach((el) => el
 $("selAll").onclick = () => { DATA.findings.forEach((f) => selected.add(f.id)); syncBoxes(); updateCount(); };
 $("selNone").onclick = () => { selected.clear(); syncBoxes(); updateCount(); };
 
-$("dlgTitle").textContent = `Fix prompt — paste into ${(DATA.agentInfo || {}).name || "your coding agent"}`;
+$("dlgTitle").textContent = `Prompt de corrección: pégalo en ${agentName}`;
 renderCounts(); renderFindings(); renderFlows(); renderFiles(); updateCount();
 </script>
 </body>

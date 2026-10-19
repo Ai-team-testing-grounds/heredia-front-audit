@@ -41,11 +41,28 @@ git(clean, "init", "-q"); writeFileSync(join(clean, "a.txt"), "a"); git(clean, "
 r = node([join(SKILL, "scripts", "collect-context.mjs")], { cwd: clean });
 ok(r.status === 0 && r.stdout.includes("NO UNCOMMITTED CHANGES"), "collect-context detects a clean tree");
 
+// 2b. monolith: the app lives in a sub-folder; the URL from the previous run is remembered
+const mono = tmp("mono");
+git(mono, "init", "-q");
+writeFileSync(join(mono, "README.md"), "x");
+mkdirSync(join(mono, "frontend", "src"), { recursive: true });
+writeFileSync(join(mono, "frontend", "package.json"), JSON.stringify({ scripts: { dev: "vite --port 5199" }, devDependencies: { vite: "^7.0.0" } }));
+git(mono, "add", "-A"); git(mono, "commit", "-qm", "init");
+writeFileSync(join(mono, "frontend", "src", "Nav.jsx"), "export const Nav = () => null;\n");
+mkdirSync(join(mono, ".heredia-front-audit", "runs", "2000-01-01_00-00-00"), { recursive: true });
+writeFileSync(join(mono, ".heredia-front-audit", "runs", "2000-01-01_00-00-00", "findings.json"), JSON.stringify({ baseUrl: "http://mi-app.test", findings: [] }));
+r = node([join(SKILL, "scripts", "collect-context.mjs")], { cwd: mono });
+ok(r.stdout.includes("Project stack in `frontend/`") && r.stdout.includes("run them inside `frontend/`") && r.stdout.includes("http://localhost:5199"), "collect-context finds the app in a sub-folder of a monolith");
+ok(r.stdout.includes("App URL from the previous run") && r.stdout.includes("http://mi-app.test"), "collect-context remembers the previous run's URL");
+
 // 3. render the example report
 r = node([join(SKILL, "scripts", "render-report.mjs"), join(REPO, "examples", "demo-run", "findings.json"), "--no-open"], { cwd: REPO });
 ok(r.status === 0, "render-report renders the example");
 const html = existsSync(join(REPO, "examples", "demo-run", "report.html")) ? readFileSync(join(REPO, "examples", "demo-run", "report.html"), "utf8") : "";
 ok(html.includes("data:image/png;base64") && !html.includes("/*__HEREDIA_FRONT_AUDIT_DATA__*/null"), "report embeds data and screenshots");
+const report = JSON.parse(html.match(/const DATA = (.*);\n/)[1]);
+const flows = Object.fromEntries(report.flowsTested.map((f) => [f.name, f]));
+ok(flows["Checkout con email vacío"].steps[1].screenshotData?.startsWith("data:image/png;base64") && flows["Checkout: flujo principal"].steps[0].action === "Abrir /checkout", "flow steps embed screenshots for the replay; string steps still work");
 const prompt = readFileSync(join(REPO, "examples", "demo-run", "fix-prompt.md"), "utf8");
 ok(prompt.includes("### F2") && !prompt.includes("### F5"), "fix prompt includes actionable findings and skips info");
 
@@ -68,7 +85,7 @@ const fixture = (files) => {
   return result;
 };
 let st = fixture({ "composer.json": JSON.stringify({ require: { php: "^8.2", "laravel/framework": "^11.0", "livewire/livewire": "^3.0" } }), artisan: "", ".env": "APP_URL=http://my-app.test\n", "package.json": JSON.stringify({ scripts: { dev: "vite" }, devDependencies: { vite: "^5" } }) });
-ok(st.stacks.some((s) => s.startsWith("Laravel")) && st.start.some((c) => c.startsWith("php artisan serve")) && st.urls.some((u) => u.startsWith("http://my-app.test")) && st.start.some((c) => c.startsWith("npm run dev")), "detects Laravel + Vite, artisan serve and APP_URL");
+ok(st.stacks.some((s) => s.startsWith("Laravel")) && st.start.some((c) => c.startsWith("php artisan serve")) && st.urls.some((u) => u.startsWith("http://my-app.test")) && st.start.some((c) => c.startsWith("npm run dev")) && st.urls.some((u) => u.includes(".test   # guess")), "detects Laravel + Vite, artisan serve, APP_URL and guesses Laragon/XAMPP URLs");
 st = fixture({ "angular.json": JSON.stringify({ projects: { web: { architect: { serve: { options: { port: 4300 } } } } } }), "package.json": JSON.stringify({ scripts: { start: "ng serve" }, dependencies: { "@angular/core": "^18.0.0" } }) });
 ok(st.stacks.some((s) => s.startsWith("Angular")) && st.urls.includes("http://localhost:4300"), "detects Angular and its serve port");
 st = fixture({ "public/index.php": "<?php echo 1;" });
@@ -83,7 +100,7 @@ ok(st.stacks.includes("Static HTML/CSS/JS"), "detects a static site");
 // 4. installer (user + project)
 const home = tmp("home");
 const env = { ...process.env, HEREDIA_FRONT_AUDIT_HOME: home };
-r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "--claude", "--codex"], { env });
+r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "--claude", "--codex", "--no-playwright"], { env });
 ok(r.status === 0, "installer runs");
 const claudeDir = join(home, ".claude", "skills", "heredia-front-audit");
 const codexDir = join(home, ".agents", "skills", "heredia-front-audit");
@@ -94,13 +111,13 @@ const baked = codexMd.match(/node "(.+?)\/scripts\/collect-context\.mjs"/)?.[1];
 ok(baked && existsSync(join(baked, "scripts", "collect-context.mjs")), "Codex SKILL.md points at the installed scripts");
 ok(existsSync(join(codexDir, "agents", "openai.yaml")), "Codex agents/openai.yaml written");
 
-r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "--codex", "--claude", "--project"], { cwd: repo, env });
+r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "--codex", "--claude", "--project", "--no-playwright"], { cwd: repo, env });
 ok(r.status === 0 && readFileSync(join(repo, ".agents", "skills", "heredia-front-audit", "SKILL.md"), "utf8").includes('node ".agents/skills/heredia-front-audit/scripts/collect-context.mjs"'), "project install uses repo-relative paths for Codex");
 ok(existsSync(join(repo, ".claude", "skills", "heredia-front-audit", "SKILL.md")), "project install for Claude Code");
 
 r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "uninstall", "--claude", "--codex"], { env });
 ok(r.status === 0 && !existsSync(claudeDir) && !existsSync(codexDir), "uninstall removes both");
 
-for (const d of [repo, clean, home]) rmSync(d, { recursive: true, force: true });
+for (const d of [repo, clean, mono, home]) rmSync(d, { recursive: true, force: true });
 console.log(failed ? `\n${failed} check(s) failed` : "\nAll checks passed");
 process.exit(failed ? 1 : 0);

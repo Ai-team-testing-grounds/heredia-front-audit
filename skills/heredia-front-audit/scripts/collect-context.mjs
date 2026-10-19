@@ -3,8 +3,8 @@
 // run directory, branch, uncommitted changes (staged + unstaged + untracked) and how to start the app (any stack).
 // Always exits 0 so it never aborts the skill.
 import { execSync } from "node:child_process";
-import { mkdirSync, writeFileSync, existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync } from "node:fs";
+import { join, dirname, relative, sep } from "node:path";
 import { detectStack, summarizeChangedFiles } from "./detect-stack.mjs";
 
 const MAX_DIFF_LINES = Number(process.env.HEREDIA_FRONT_AUDIT_MAX_DIFF_LINES || 2500);
@@ -76,19 +76,49 @@ if (diff.length > MAX_DIFF_LINES) {
 section("Full diff vs HEAD", "```diff\n" + (diffText.trimEnd() || "(no tracked-file changes; see untracked files)") + "\n```");
 
 // ---- stack detection (framework-agnostic) ----
-const dirs = [...new Set([process.cwd(), root])];
-const stack = detectStack(dirs);
+// In a monolith or monorepo the app may live in a sub-folder (frontend/, web/, apps/x/): use the
+// nearest folder above each changed file that has a project manifest, plus the repo root.
 const changedPaths = statusLines.map((l) => l.slice(3).replace(/^"|"$/g, "").split(" -> ").pop());
-section("Project stack (auto-detected — verify before relying on it)", [
-  `- stack: ${stack.stacks.join(", ") || "(unknown — inspect the repo)"}`,
-  `- manifests: ${stack.manifests.map((m) => `\`${m}\``).join(", ") || "(none)"}`,
+const MARKERS = ["package.json", "composer.json", "artisan", "angular.json", "Gemfile", "manage.py", "pyproject.toml",
+  "wp-config.php", "docker-compose.yml", "compose.yml", ".ddev", "go.mod", "pom.xml"];
+const appDirFor = (file) => {
+  for (let d = dirname(file); d !== "." && d !== "/" && d !== ""; d = dirname(d)) {
+    if (MARKERS.some((m) => existsSync(join(root, d, m)))) return d;
+  }
+  return ".";
+};
+const cwdRel = relative(root, process.cwd()).split(sep).join("/") || ".";
+const appDirs = [...new Set([...changedPaths.map(appDirFor), cwdRel, "."])]
+  .filter((d) => d === "." || !d.startsWith(".."));
+
+const notes = new Set();
+let anyUrl = false;
+for (const d of appDirs) {
+  const stack = detectStack([join(root, d)]);
+  if (d !== "." && !stack.stacks.length && !stack.start.length) continue;
+  stack.notes.forEach((n) => notes.add(n));
+  anyUrl ||= stack.urls.length > 0;
+  section(`Project stack in \`${d === "." ? "(repo root)" : d + "/"}\` (auto-detected — verify before relying on it)`, [
+    `- stack: ${stack.stacks.join(", ") || "(unknown — inspect the repo)"}`,
+    `- manifests: ${stack.manifests.map((m) => `\`${m}\``).join(", ") || "(none)"}`,
+    `- changed files here: ${changedPaths.filter((p) => appDirFor(p) === d).length}`,
+    "- likely app URLs:",
+    ...(stack.urls.length ? stack.urls.map((u) => `  - ${u}`) : ["  - (none inferred)"]),
+    `- ways to start it${d === "." ? "" : ` (run them inside \`${d}/\`)`}:`,
+    ...(stack.start.length ? stack.start.map((c) => `  - \`${c}\``) : ["  - (none inferred)"]),
+  ].join("\n"));
+}
+section("Changed files and notes", [
   `- changed file kinds: ${summarizeChangedFiles(changedPaths)}`,
-  "- likely app URLs:",
-  ...(stack.urls.length ? stack.urls.map((u) => `  - ${u}`) : ["  - (none inferred)"]),
-  "- ways to start it:",
-  ...(stack.start.length ? stack.start.map((c) => `  - \`${c}\``) : ["  - (none inferred)"]),
-  ...stack.notes.map((n) => `- note: ${n}`),
+  ...(appDirs.length > 1 ? ["- several project folders were found: test the one(s) the changed files belong to."] : []),
+  ...[...notes].filter((n) => !(anyUrl && n.startsWith("No dev URL"))).map((n) => `- note: ${n}`),
 ].join("\n"));
+
+// ---- URL from the previous run (saves the user from passing it every time) ----
+const lastUrl = readdirSync(join(base, "runs")).sort().reverse().map((r) => {
+  try { return JSON.parse(readFileSync(join(base, "runs", r, "findings.json"), "utf8")).baseUrl; } catch { return null; }
+}).find(Boolean);
+if (lastUrl) section("App URL from the previous run — try it first", fence(lastUrl));
 
 const pkgFile = join(root, "package.json");
 if (existsSync(pkgFile)) {

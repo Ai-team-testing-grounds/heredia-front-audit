@@ -6,146 +6,113 @@
   "stack": "React 19 + Vite",
   "baseUrl": "http://localhost:5173",
   "browser": "playwright-mcp",
-  "summary": "The diff adds a new Checkout page with an email field and a Pay button, and refactors App routing. The happy path renders, but submitting with an empty or invalid email throws in the console and gives the user no feedback, and the Pay button can be double-submitted. Mobile layout overflows horizontally.",
+  "summary": "El diff agrega una nueva página de Checkout con un campo de email y un botón Pagar, y refactoriza el ruteo en App. El flujo principal funciona, pero enviar con el email vacío o inválido lanza un error en consola y el usuario no recibe ningún mensaje; además el botón Pagar permite doble envío. En móvil el layout se desborda horizontalmente.",
   "changedFiles": [
-    {
-      "path": "src/App.tsx",
-      "status": "M"
-    },
-    {
-      "path": "src/Checkout.tsx",
-      "status": "??"
-    },
-    {
-      "path": "src/api/orders.ts",
-      "status": "M"
-    }
+    { "path": "src/App.tsx", "status": "M" },
+    { "path": "src/Checkout.tsx", "status": "??" },
+    { "path": "src/api/orders.ts", "status": "M" }
   ],
   "flowsTested": [
     {
-      "name": "Checkout happy path",
+      "name": "Checkout: flujo principal",
       "result": "pass",
-      "steps": [
-        "Open /checkout",
-        "Type valid email",
-        "Click Pay"
-      ]
+      "steps": ["Abrir /checkout", "Escribir un email válido", "Clic en Pagar"]
     },
     {
-      "name": "Checkout with empty email",
+      "name": "Checkout con email vacío",
       "result": "fail",
       "steps": [
-        "Open /checkout",
-        "Click Pay"
+        { "action": "Abrir /checkout", "result": "pass" },
+        {
+          "action": "Clic en Pagar sin escribir el email",
+          "screenshot": "screenshots/checkout-empty.png",
+          "result": "fail",
+          "note": "No aparece error en el formulario; TypeError en consola"
+        }
       ],
-      "notes": "TypeError in console, no inline error"
+      "notes": "TypeError en consola, sin mensaje de error en el formulario"
     },
     {
-      "name": "Double click Pay",
+      "name": "Doble clic en Pagar",
       "result": "fail",
-      "steps": [
-        "Open /checkout",
-        "Type valid email",
-        "Double-click Pay"
-      ],
-      "notes": "Two POST /api/orders requests"
+      "steps": ["Abrir /checkout", "Escribir un email válido", "Doble clic en Pagar"],
+      "notes": "Dos peticiones POST /api/orders"
     },
     {
-      "name": "Checkout at 375px",
+      "name": "Checkout a 375px",
       "result": "partial",
-      "notes": "Horizontal scroll caused by fixed 420px card width"
+      "notes": "Scroll horizontal por el ancho fijo de 420px de la tarjeta"
     }
   ],
   "findings": [
     {
       "id": "F1",
-      "title": "Submitting checkout with an empty email crashes the submit handler",
+      "title": "Enviar el checkout con el email vacío rompe el handler de envío",
       "severity": "high",
       "category": "functional",
       "source": "browser",
-      "location": {
-        "file": "src/Checkout.tsx",
-        "line": 31,
-        "url": "/checkout"
-      },
-      "description": "handleSubmit calls email.trim() before validating, but email is undefined until the input is touched, so the handler throws and the user sees nothing.",
-      "reproSteps": [
-        "Open /checkout",
-        "Without typing, click Pay"
-      ],
-      "expected": "Inline error under the email field: 'Enter your email'",
-      "actual": "Nothing happens; TypeError in console",
+      "location": { "file": "src/Checkout.tsx", "line": 31, "url": "/checkout" },
+      "description": "handleSubmit llama a email.trim() antes de validar, pero email es undefined hasta que se toca el campo, así que el handler lanza un error y el usuario no ve nada.",
+      "reproSteps": ["Abrir /checkout", "Sin escribir nada, clic en Pagar"],
+      "expected": "Mensaje de error bajo el campo de email: 'Ingresa tu email'",
+      "actual": "No pasa nada; TypeError en consola",
       "evidence": {
         "screenshot": "screenshots/checkout-empty.png",
         "console": "TypeError: Cannot read properties of undefined (reading 'trim')\n    at handleSubmit (Checkout.tsx:31:22)"
       },
       "fix": {
-        "explanation": "Initialise the email state to an empty string and validate before trimming; render the error message under the input with aria-describedby.",
-        "snippet": "const [email, setEmail] = useState(\"\");\n// ...\nif (!email.trim()) { setError(\"Enter your email\"); return; }"
+        "explanation": "Inicializa el estado de email con un string vacío y valida antes de hacer trim; muestra el error bajo el input con aria-describedby.",
+        "snippet": "const [email, setEmail] = useState(\"\");\n// ...\nif (!email.trim()) { setError(\"Ingresa tu email\"); return; }"
       }
     },
     {
       "id": "F2",
-      "title": "Pay button can be double-submitted, creating two orders",
+      "title": "El botón Pagar permite doble envío y crea dos órdenes",
       "severity": "critical",
       "category": "network",
       "source": "browser",
-      "location": {
-        "file": "src/Checkout.tsx",
-        "line": 44,
-        "url": "/checkout"
-      },
-      "description": "The button is not disabled while createOrder() is pending, so a double click sends two POST /api/orders requests.",
-      "reproSteps": [
-        "Fill a valid email",
-        "Double-click Pay quickly"
-      ],
-      "expected": "One request; button disabled with a spinner while pending",
-      "actual": "Two POST /api/orders → 201, 201",
+      "location": { "file": "src/Checkout.tsx", "line": 44, "url": "/checkout" },
+      "description": "El botón no se deshabilita mientras createOrder() está pendiente, así que un doble clic envía dos peticiones POST /api/orders.",
+      "reproSteps": ["Escribir un email válido", "Doble clic rápido en Pagar"],
+      "expected": "Una sola petición; botón deshabilitado con spinner mientras espera",
+      "actual": "Dos POST /api/orders → 201, 201",
       "fix": {
-        "explanation": "Track an isSubmitting state, disable the button while true, and early-return in handleSubmit if already submitting."
+        "explanation": "Agrega un estado isSubmitting, deshabilita el botón mientras sea true y sal de handleSubmit si ya se está enviando."
       }
     },
     {
       "id": "F3",
-      "title": "Checkout card overflows horizontally on mobile",
+      "title": "La tarjeta de checkout se desborda horizontalmente en móvil",
       "severity": "medium",
       "category": "responsive",
       "source": "browser",
-      "location": {
-        "file": "src/Checkout.tsx",
-        "line": 12,
-        "url": "/checkout"
-      },
-      "description": "The card has a fixed width of 420px, causing horizontal scroll at 375px.",
-      "expected": "Card fits the viewport",
-      "actual": "~45px horizontal scroll",
+      "location": { "file": "src/Checkout.tsx", "line": 12, "url": "/checkout" },
+      "description": "La tarjeta tiene un ancho fijo de 420px, lo que causa scroll horizontal a 375px.",
+      "expected": "La tarjeta cabe en la pantalla",
+      "actual": "~45px de scroll horizontal",
       "fix": {
-        "explanation": "Replace width: 420px with width: 100%; max-width: 420px."
+        "explanation": "Reemplaza width: 420px por width: 100%; max-width: 420px."
       }
     },
     {
       "id": "F4",
-      "title": "Email input has no accessible label",
+      "title": "El campo de email no tiene etiqueta accesible",
       "severity": "low",
       "category": "accessibility",
       "source": "code",
-      "location": {
-        "file": "src/Checkout.tsx",
-        "line": 52
-      },
-      "description": "The input relies on placeholder text only; screen readers announce it as 'edit text'.",
+      "location": { "file": "src/Checkout.tsx", "line": 52 },
+      "description": "El input solo tiene placeholder; los lectores de pantalla lo anuncian como 'campo de texto'.",
       "fix": {
-        "explanation": "Add a visible <label htmlFor=\"email\"> or aria-label=\"Email\"."
+        "explanation": "Agrega un <label htmlFor=\"email\"> visible o aria-label=\"Email\"."
       }
     },
     {
       "id": "F5",
-      "title": "Payment failure state could not be tested",
+      "title": "No se pudo probar el caso de pago fallido",
       "severity": "info",
       "category": "ux",
       "source": "browser",
-      "description": "There is no way to force the payments API to fail locally. Consider adding a mock flag so the error path can be verified."
+      "description": "No hay forma de forzar un fallo de la API de pagos en local. Conviene agregar un flag de mock para poder verificar el camino de error."
     }
   ]
 }

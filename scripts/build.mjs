@@ -28,7 +28,9 @@ Setup line for the info finding if none is available: \`claude --chrome\`, or
 1. **Playwright MCP** — the \`playwright\` MCP server's tools (\`browser_navigate\`,
    \`browser_snapshot\`, \`browser_click\`, \`browser_type\`, \`browser_console_messages\`,
    \`browser_network_requests\`, \`browser_take_screenshot\`, \`browser_resize\`, …).
-2. Any other browser automation tool you have.
+2. The Codex app's own browser (\`@Browser\`, best for localhost) or its Chrome extension,
+   if this session runs in the Codex desktop app and the Playwright tools are missing.
+3. Any other browser automation tool you have.
 
 The dev server is on localhost; if the sandbox blocks a command that starts it or reaches
 it, ask the user to approve it rather than giving up.
@@ -58,8 +60,8 @@ export function buildSkillMd(agent, skillDir) {
 
 export const CODEX_OPENAI_YAML = `interface:
   display_name: "Heredia Front Audit"
-  short_description: "E2E-review uncommitted frontend changes in a real browser"
-  default_prompt: "Run $heredia-front-audit on my uncommitted frontend changes"
+  short_description: "Audita en un navegador real los cambios de frontend sin commit"
+  default_prompt: "Ejecuta $heredia-front-audit sobre mis cambios de frontend sin commit"
 policy:
   allow_implicit_invocation: false
 `;
