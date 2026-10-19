@@ -1,0 +1,9 @@
+{
+  "name": "heredia-demo-frontend",
+  "private": true,
+  "type": "module",
+  "description": "Tiny login + dashboard app for trying out heredia-front-audit. No dependencies.",
+  "scripts": {
+    "dev": "node server.mjs --port 4173"
+  }
+}

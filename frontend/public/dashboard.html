@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · Heredia Tasks</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <strong>Heredia Tasks</strong>
+    <span class="who">Hi, <span id="userName">…</span></span>
+    <button id="logoutBtn">Log out</button>
+  </header>
+
+  <main class="dash">
+    <section class="stats" aria-label="Task stats">
+      <div class="stat"><span class="label">Total</span><b id="statTotal">–</b></div>
+      <div class="stat"><span class="label">Open</span><b id="statOpen">–</b></div>
+      <div class="stat"><span class="label">Done</span><b id="statDone">–</b></div>
+      <div class="stat"><span class="label">Last added</span><b id="statLast" class="small">–</b></div>
+    </section>
+
+    <section class="card">
+      <h2>Tasks</h2>
+      <form id="addForm" class="row">
+        <label for="newTask" class="sr-only">New task</label>
+        <input id="newTask" placeholder="What needs doing?" maxlength="120">
+        <button type="submit" class="primary" id="addBtn">Add task</button>
+      </form>
+      <p id="taskError" class="error" role="alert" hidden></p>
+      <input id="search" type="search" placeholder="Search tasks" aria-label="Search tasks">
+      <ul id="taskList" class="tasks"></ul>
+      <p id="emptyState" class="muted" hidden>No tasks yet. Add your first one above.</p>
+    </section>
+
+    <section class="card">
+      <h2>Profile</h2>
+      <form id="profileForm" class="row">
+        <input id="displayName" placeholder="Display name">
+        <button type="submit" class="primary">Save</button>
+      </form>
+      <p id="profileMsg" role="status"></p>
+    </section>
+  </main>
+  <script src="/dashboard.js"></script>
+</body>
+</html>
