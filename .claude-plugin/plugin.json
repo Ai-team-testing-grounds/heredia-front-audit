@@ -1,10 +1,28 @@
 {
   "name": "heredia-front-audit",
   "version": "1.0.0",
-  "description": "E2E review of uncommitted frontend changes: drives your app in a real browser, reviews the diff, and opens an HTML report with fixes and a copy-ready fix prompt.",
-  "author": { "name": "YOUR_NAME" },
-  "homepage": "https://github.com/YOUR_GITHUB_USER/heredia-front-audit",
-  "repository": "https://github.com/YOUR_GITHUB_USER/heredia-front-audit",
+  "description": "Auditoría E2E de los cambios de frontend sin commit: prueba la app en un navegador real (Playwright), revisa el diff y abre un reporte HTML en español con correcciones y un prompt listo para copiar.",
+  "author": {
+    "name": "Ai-team-testing-grounds"
+  },
+  "homepage": "https://github.com/Ai-team-testing-grounds/heredia-front-audit",
+  "repository": "https://github.com/Ai-team-testing-grounds/heredia-front-audit",
   "license": "MIT",
-  "keywords": ["e2e", "qa", "frontend", "playwright", "chrome", "code-review", "testing"]
+  "keywords": [
+    "e2e",
+    "qa",
+    "frontend",
+    "playwright",
+    "code-review",
+    "testing"
+  ],
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
 }

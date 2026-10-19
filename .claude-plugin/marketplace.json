@@ -1,7 +1,7 @@
 {
   "name": "heredia-front-audit",
   "description": "heredia-front-audit: E2E review of uncommitted frontend changes for Claude Code",
-  "owner": { "name": "YOUR_NAME" },
+  "owner": { "name": "Ai-team-testing-grounds" },
   "plugins": [
     {
       "name": "heredia-front-audit",

@@ -44,6 +44,9 @@
   header .eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--brand-eyebrow); }
   header h1 { margin: 10px 0 8px; font-size: 28px; letter-spacing: -.01em; }
   .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: rgba(255,255,255,.85); font: 13px var(--mono); }
+  .request { margin: 24px 0 0; padding: 12px 18px; background: var(--panel); border: 1px dashed var(--accent); border-radius: 8px; }
+  .request .label { display: block; font: 700 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .request + .summary { margin-top: 12px; }
   .summary { margin: 24px 0 20px; padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 8px; }
 
   .counts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 8px; }
@@ -132,6 +135,7 @@
   </header>
 </div>
 <div class="wrap">
+  <div class="request" id="request" hidden><span class="label">Lo que pediste auditar</span><span id="requestText"></span></div>
   <div class="summary" id="summary"></div>
   <div class="counts" id="counts"></div>
 
@@ -198,6 +202,7 @@ $("meta").innerHTML = [
   `generado ${esc(new Date(DATA.generatedAt).toLocaleString("es-PE"))}`,
 ].filter(Boolean).map((s) => `<span>${s}</span>`).join("");
 $("summary").textContent = DATA.summary || "Sin resumen.";
+if (DATA.request) { $("requestText").textContent = DATA.request; $("request").hidden = false; }
 
 function renderCounts() {
   $("counts").innerHTML = SEV.map((s) => {

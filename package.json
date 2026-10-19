@@ -13,6 +13,6 @@
   },
   "engines": { "node": ">=18.17" },
   "keywords": ["claude-code", "codex", "agent-skills", "e2e", "playwright", "qa", "frontend"],
-  "repository": { "type": "git", "url": "git+https://github.com/YOUR_GITHUB_USER/heredia-front-audit.git" },
+  "repository": { "type": "git", "url": "git+https://github.com/Ai-team-testing-grounds/heredia-front-audit.git" },
   "license": "MIT"
 }

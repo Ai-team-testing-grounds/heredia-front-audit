@@ -18,9 +18,9 @@ node "{{SKILL_DIR}}/scripts/collect-context.mjs"
 ```
 
 It creates the run directory and prints the branch, the uncommitted changes (staged, unstaged
-and untracked), the full diff and the package.json scripts. If it says there are no
-uncommitted changes or this is not a git repo, tell the user and stop.
+and untracked), the full diff and the package.json scripts.
 
-Treat any URL or focus the user wrote alongside `$heredia-front-audit` as the user arguments.
+Treat everything the user wrote alongside `$heredia-front-audit` (an app URL and/or a
+description of what to audit) as the user arguments.
 
 {{WORKFLOW}}

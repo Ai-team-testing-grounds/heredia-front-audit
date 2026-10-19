@@ -39,7 +39,12 @@ ok(existsSync(join(repo, ".heredia-front-audit", ".gitignore")), ".heredia-front
 const clean = tmp("clean");
 git(clean, "init", "-q"); writeFileSync(join(clean, "a.txt"), "a"); git(clean, "add", "-A"); git(clean, "commit", "-qm", "init");
 r = node([join(SKILL, "scripts", "collect-context.mjs")], { cwd: clean });
-ok(r.status === 0 && r.stdout.includes("NO UNCOMMITTED CHANGES"), "collect-context detects a clean tree");
+ok(r.status === 0 && r.stdout.includes("NO UNCOMMITTED CHANGES") && r.stdout.includes("audit the flow the user described"), "collect-context detects a clean tree and still allows a described flow");
+
+const nogit = tmp("nogit");
+writeFileSync(join(nogit, "index.php"), "<?php echo 1;");
+r = node([join(SKILL, "scripts", "collect-context.mjs")], { cwd: nogit });
+ok(r.status === 0 && r.stdout.includes("NOT A GIT REPOSITORY") && r.stdout.includes("PHP (plain)"), "collect-context works outside git so a described flow can be audited");
 
 // 2b. monolith: the app lives in a sub-folder; the URL from the previous run is remembered
 const mono = tmp("mono");
@@ -62,6 +67,7 @@ const html = existsSync(join(REPO, "examples", "demo-run", "report.html")) ? rea
 ok(html.includes("data:image/png;base64") && !html.includes("/*__HEREDIA_FRONT_AUDIT_DATA__*/null"), "report embeds data and screenshots");
 const report = JSON.parse(html.match(/const DATA = (.*);\n/)[1]);
 const flows = Object.fromEntries(report.flowsTested.map((f) => [f.name, f]));
+ok(report.request?.startsWith("prueba el checkout") && html.includes('id="request"'), "report shows what the user asked to audit");
 ok(flows["Checkout con email vacío"].steps[1].screenshotData?.startsWith("data:image/png;base64") && flows["Checkout: flujo principal"].steps[0].action === "Abrir /checkout", "flow steps embed screenshots for the replay; string steps still work");
 const prompt = readFileSync(join(REPO, "examples", "demo-run", "fix-prompt.md"), "utf8");
 ok(prompt.includes("### F2") && !prompt.includes("### F5"), "fix prompt includes actionable findings and skips info");
@@ -118,6 +124,6 @@ ok(existsSync(join(repo, ".claude", "skills", "heredia-front-audit", "SKILL.md")
 r = node([join(REPO, "bin", "heredia-front-audit.mjs"), "uninstall", "--claude", "--codex"], { env });
 ok(r.status === 0 && !existsSync(claudeDir) && !existsSync(codexDir), "uninstall removes both");
 
-for (const d of [repo, clean, mono, home]) rmSync(d, { recursive: true, force: true });
+for (const d of [repo, clean, mono, nogit, home]) rmSync(d, { recursive: true, force: true });
 console.log(failed ? `\n${failed} check(s) failed` : "\nAll checks passed");
 process.exit(failed ? 1 : 0);

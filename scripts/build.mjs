@@ -13,14 +13,15 @@ const read = (p) => readFileSync(join(REPO, p), "utf8");
 const BROWSER = {
   "claude-code": `Use the first one that is available in this session:
 
-1. **Claude in Chrome** — tools named \`mcp__claude-in-chrome__*\` (session started with
-   \`claude --chrome\`, or Chrome enabled by default via \`/chrome\`). Best for apps behind a login,
-   since it uses the user's real Chrome sessions. Always work in a new tab.
-2. **Playwright MCP** — tools named \`mcp__playwright__browser_*\`. Best for repeatable,
-   headless, isolated runs.
+1. **Playwright MCP** — tools named \`mcp__playwright__browser_*\` (or
+   \`mcp__plugin_heredia-front-audit_playwright__browser_*\` when installed as a plugin). This is the team default
+   (the installer registers it), so every run behaves the same on every machine.
+2. **Claude in Chrome** — tools named \`mcp__claude-in-chrome__*\`, only if Playwright is not
+   available in this session. Always work in a new tab.
 3. Any other browser automation tool you have.
 
-Setup line for the info finding if none is available: \`claude --chrome\`, or
+Setup line for the info finding if none is available: run the installer again
+(\`npx github:Ai-team-testing-grounds/heredia-front-audit\`), or
 \`claude mcp add --scope user playwright -- npx @playwright/mcp@latest\`.`,
 
   codex: `Use the browser automation tools available in this session, in this order:
@@ -35,7 +36,8 @@ Setup line for the info finding if none is available: \`claude --chrome\`, or
 The dev server is on localhost; if the sandbox blocks a command that starts it or reaches
 it, ask the user to approve it rather than giving up.
 
-Setup line for the info finding if none is available:
+Setup line for the info finding if none is available: run the installer again
+(\`npx github:Ai-team-testing-grounds/heredia-front-audit\`), or
 \`codex mcp add playwright -- npx @playwright/mcp@latest\`.`,
 };
 

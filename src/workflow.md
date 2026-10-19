@@ -1,8 +1,30 @@
 Talk to the user in Spanish (questions, progress updates and the final reply).
 
-## Step 1 — Build a test plan from the diff
+## First — Read the user's request
 
-1. Read every changed and untracked file in full, plus the components/routes/hooks/stores/API
+The user arguments ({{ARGS}}) may contain, in any order, in Spanish or English, with or
+without quotes:
+
+- an **app URL**: any `http://` / `https://` address, or a bare host such as
+  `mi-proyecto.test` or `localhost:4173`;
+- a **description of what to audit**: everything else, e.g.
+  `prueba el login con una contraseña incorrecta y luego crea una tarea`.
+
+Pick the mode from the context and the arguments:
+
+| Uncommitted changes? | Description given? | What to audit |
+|---|---|---|
+| yes | no | The flows the diff touches (the default). |
+| yes | yes | The described flows first, tested exactly as described (the steps, data and expected results the user mentions), then the other flows the diff touches. |
+| no, or not a git repo | yes | Only the described flows. There is no diff: in Step 1 and Step 5 use the code behind those pages instead. |
+| no, or not a git repo | no | Ask the user, in Spanish, which flow to audit (one question), then continue with their answer as the description. |
+
+When there is a description, copy it verbatim into the `request` field of findings.json.
+
+## Step 1 — Build a test plan
+
+1. Read every changed and untracked file in full (with no diff: the routes, pages and components
+   behind the described flows), plus the components/routes/hooks/stores/API
    clients they touch. Follow imports one level out so you understand the blast radius.
 2. Map the changes to **user-facing flows**: which routes/pages render them, which interactions
    reach them (forms, modals, navigation, auth, data loading, empty/error states). Use the stack's
@@ -12,7 +34,8 @@ Talk to the user in Spanish (questions, progress updates and the final reply).
    `config/routes` → Twig (Symfony), templates/hooks/shortcodes (WordPress), or the PHP file's own
    URL in plain PHP. Backend changes (controllers, validation, API endpoints) count when a page
    uses them.
-3. Write a short plan: for each flow, the happy path plus the edge cases most likely to break
+3. Write a short plan. If the user described flows, they come first and keep the user's own
+   steps and expectations; add the edge cases next to them. For each flow, the happy path plus the edge cases most likely to break
    given *this* diff (invalid/empty/very long input, double submit, slow or failing API,
    back/refresh, unauthenticated state, mobile width, keyboard-only use). Prioritise what the
    diff actually changed — do not test the whole app.
@@ -76,7 +99,7 @@ Be honest about evidence: a finding from the browser must be something you actua
 
 ## Step 5 — Review the changed code
 
-Read the diff again as a senior reviewer and look for issues the browser run can't easily
+Read the diff again (with no diff: the code behind the audited flows) as a senior reviewer and look for issues the browser run can't easily
 show. Mark these `"source": "code"`. Apply the general list, then the list for each stack you
 detected:
 
@@ -122,6 +145,7 @@ Write `<run dir>/findings.json` with exactly this shape (omit optional fields yo
   "stack": "e.g. Laravel 11 + Blade + Vite, or Angular 18, or React 19 + Vite",
   "baseUrl": "http://localhost:5173",
   "browser": "claude-in-chrome | playwright-mcp | other | none",
+  "request": "the user's description of what to audit, verbatim (omit if none)",
   "summary": "2-4 sentences: what changed, what you tested, overall verdict.",
   "changedFiles": [{ "path": "src/x.tsx", "status": "M | A | D | ??" }],
   "flowsTested": [

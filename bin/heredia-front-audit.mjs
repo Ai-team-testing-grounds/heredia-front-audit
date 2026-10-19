@@ -2,12 +2,12 @@
 // heredia-front-audit installer — installs the skill for Claude Code and/or Codex and gives them a
 // browser (Playwright MCP). No dependencies.
 //
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit                 install for every agent found on this machine
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit --claude        Claude Code only   (~/.claude/skills/heredia-front-audit)
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit --codex         Codex only         (~/.agents/skills/heredia-front-audit)
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit --project       into the current git repo (commit it for your team)
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit --no-playwright skip registering the Playwright MCP server
-//   npx github:YOUR_GITHUB_USER/heredia-front-audit uninstall [--claude|--codex] [--project]
+//   npx github:Ai-team-testing-grounds/heredia-front-audit                 install for every agent found on this machine
+//   npx github:Ai-team-testing-grounds/heredia-front-audit --claude        Claude Code only   (~/.claude/skills/heredia-front-audit)
+//   npx github:Ai-team-testing-grounds/heredia-front-audit --codex         Codex only         (~/.agents/skills/heredia-front-audit)
+//   npx github:Ai-team-testing-grounds/heredia-front-audit --project       into the current git repo (commit it for your team)
+//   npx github:Ai-team-testing-grounds/heredia-front-audit --no-playwright skip registering the Playwright MCP server
+//   npx github:Ai-team-testing-grounds/heredia-front-audit uninstall [--claude|--codex] [--project]
 //
 // From a clone, use `node bin/heredia-front-audit.mjs <same args>`.
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";

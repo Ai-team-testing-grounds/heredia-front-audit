@@ -36,12 +36,13 @@ if (!existsSync(join(base, ".gitignore"))) writeFileSync(join(base, ".gitignore"
 
 section("Run directory (write everything here)", fence(runDir));
 
+// No git or no changes doesn't end the run: a flow the user described can still be audited.
+const statusLines = isGit ? gitSections() : [];
 if (!isGit) {
-  section("Git", "NOT A GIT REPOSITORY — tell the user /heredia-front-audit needs a git repo with uncommitted changes, and stop.");
-  console.log(out.join("\n"));
-  process.exit(0);
+  section("Git", "NOT A GIT REPOSITORY — there is no diff. Audit the flow the user described; if they described none, ask them which flow to audit.");
 }
 
+function gitSections() {
 const hasHead = sh("git rev-parse --verify HEAD") !== null;
 const branch = sh("git rev-parse --abbrev-ref HEAD")?.trim() || "(unknown)";
 const sha = hasHead ? sh("git rev-parse --short HEAD")?.trim() : "(no commits yet)";
@@ -51,9 +52,8 @@ section("Repository", `- root: \`${root}\`\n- branch: \`${branch}\`\n- HEAD: \`$
 const statusLines = (sh("git status --porcelain=v1 --untracked-files=all") || "")
   .split("\n").filter(Boolean).filter((l) => keep(l.slice(3)));
 if (!statusLines.length) {
-  section("Working tree", "NO UNCOMMITTED CHANGES — tell the user there is nothing to test, and stop.");
-  console.log(out.join("\n"));
-  process.exit(0);
+  section("Working tree", "NO UNCOMMITTED CHANGES — audit the flow the user described; if they described none, ask them which flow to audit.");
+  return statusLines;
 }
 section("Working tree status (XY path; ?? = untracked)", fence(statusLines.join("\n")));
 
@@ -74,6 +74,8 @@ if (diff.length > MAX_DIFF_LINES) {
   diffText += `\n\n[diff truncated at ${MAX_DIFF_LINES} of ${diff.length} lines — run \`git diff HEAD -- <file>\` for the files not shown]`;
 }
 section("Full diff vs HEAD", "```diff\n" + (diffText.trimEnd() || "(no tracked-file changes; see untracked files)") + "\n```");
+return statusLines;
+}
 
 // ---- stack detection (framework-agnostic) ----
 // In a monolith or monorepo the app may live in a sub-folder (frontend/, web/, apps/x/): use the
@@ -109,7 +111,7 @@ for (const d of appDirs) {
   ].join("\n"));
 }
 section("Changed files and notes", [
-  `- changed file kinds: ${summarizeChangedFiles(changedPaths)}`,
+  `- changed file kinds: ${summarizeChangedFiles(changedPaths) || "(none)"}`,
   ...(appDirs.length > 1 ? ["- several project folders were found: test the one(s) the changed files belong to."] : []),
   ...[...notes].filter((n) => !(anyUrl && n.startsWith("No dev URL"))).map((n) => `- note: ${n}`),
 ].join("\n"));

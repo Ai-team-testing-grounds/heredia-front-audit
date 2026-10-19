@@ -10,16 +10,13 @@ encontrados, cómo corregirlos, la repetición paso a paso de cada prueba y un b
 
 ![Reporte de heredia-front-audit](docs/report-screenshot.png)
 
-> **Antes de publicar:** ejecuta una vez `node scripts/set-owner.mjs <usuario-u-organización-de-github> "Tu Nombre"`.
-> Reemplaza los textos `YOUR_GITHUB_USER` / `YOUR_NAME` en todo el repo y borra esta nota.
-
 ---
 
 ## En resumen
 
 ```bash
 # 1. Una sola vez, en cualquier terminal:
-npx github:YOUR_GITHUB_USER/heredia-front-audit
+npx github:Ai-team-testing-grounds/heredia-front-audit
 
 # 2. Cada vez que quieras auditar, en la carpeta de tu proyecto:
 claude          # y dentro escribe:  /heredia-front-audit
@@ -28,6 +25,12 @@ codex           # o, si usas Codex:  $heredia-front-audit
 
 Eso es todo. El reporte se abre solo en tu navegador.
 
+¿Quieres que pruebe algo en concreto? Descríbelo después del comando, con tus palabras:
+
+```text
+/heredia-front-audit prueba el login con una contraseña incorrecta y luego crea una tarea
+```
+
 ---
 
 ## Contenido
@@ -35,6 +38,7 @@ Eso es todo. El reporte se abre solo en tu navegador.
 - [Qué hace](#qué-hace)
 - [Instalación (una sola vez)](#instalación-una-sola-vez)
 - [Uso](#uso)
+- [Lista de comandos](#lista-de-comandos)
 - [Según tu tipo de proyecto](#según-tu-tipo-de-proyecto)
 - [El reporte](#el-reporte)
 - [El navegador: Claude Code y Codex](#el-navegador-claude-code-y-codex)
@@ -46,7 +50,8 @@ Eso es todo. El reporte se abre solo en tu navegador.
 
 ## Qué hace
 
-- **Solo prueba lo que cambiaste**: los flujos que tocan tus cambios sin commit, no toda la app.
+- **Prueba lo que cambiaste o lo que le pidas**: los flujos que tocan tus cambios sin commit, o el
+  flujo que describas con tus palabras, no toda la app.
 - **Navegador real**: flujo principal, casos límite, vista móvil (375px), errores de consola,
   llamadas de red fallidas o duplicadas y accesibilidad básica.
 - **Evidencia de lo probado**: una captura después de cada paso. En el reporte, cada flujo tiene un
@@ -73,7 +78,7 @@ Necesitas:
 Luego, en cualquier terminal:
 
 ```bash
-npx github:YOUR_GITHUB_USER/heredia-front-audit
+npx github:Ai-team-testing-grounds/heredia-front-audit
 ```
 
 Este comando:
@@ -90,12 +95,12 @@ ejecuta el mismo comando otra vez.
 
 | Quiero… | Comando |
 |---|---|
-| Solo Claude Code | `npx github:YOUR_GITHUB_USER/heredia-front-audit --claude` |
-| Solo Codex | `npx github:YOUR_GITHUB_USER/heredia-front-audit --codex` |
+| Solo Claude Code | `npx github:Ai-team-testing-grounds/heredia-front-audit --claude` |
+| Solo Codex | `npx github:Ai-team-testing-grounds/heredia-front-audit --codex` |
 | Sin registrar Playwright | agrega `--no-playwright` |
-| Sin npx | `git clone https://github.com/YOUR_GITHUB_USER/heredia-front-audit && node heredia-front-audit/bin/heredia-front-audit.mjs` |
-| Desinstalar | `npx github:YOUR_GITHUB_USER/heredia-front-audit uninstall` |
-| Como plugin de Claude Code | dentro de Claude Code: `/plugin marketplace add YOUR_GITHUB_USER/heredia-front-audit` y luego `/plugin install heredia-front-audit@heredia-front-audit` (no lo combines con el instalador) |
+| Sin npx | `git clone https://github.com/Ai-team-testing-grounds/heredia-front-audit && node heredia-front-audit/bin/heredia-front-audit.mjs` |
+| Desinstalar | `npx github:Ai-team-testing-grounds/heredia-front-audit uninstall` |
+| Como plugin de Claude Code (incluye el navegador) | dentro de Claude Code: `/plugin marketplace add Ai-team-testing-grounds/heredia-front-audit` y luego `/plugin install heredia-front-audit@heredia-front-audit` (no lo combines con el instalador) |
 
 </details>
 
@@ -109,13 +114,34 @@ ejecuta el mismo comando otra vez.
 |---|---|---|
 | Normal | `/heredia-front-audit` | `$heredia-front-audit` |
 | Indicando la URL de la app | `/heredia-front-audit http://localhost:5173` | `$heredia-front-audit http://localhost:5173` |
-| Con un foco | `/heredia-front-audit "el nuevo formulario de pago, en móvil"` | `$heredia-front-audit enfócate en el formulario de pago en móvil` |
+| Describiendo qué auditar | `/heredia-front-audit prueba el formulario de pago en móvil` | `$heredia-front-audit prueba el formulario de pago en móvil` |
+
+### Describir qué quieres auditar
+
+Después del comando puedes escribir, con tus palabras, el flujo que quieres que pruebe: los pasos,
+los datos y lo que esperas que pase. No hacen falta comillas, y la URL puede ir en cualquier parte.
+
+```text
+/heredia-front-audit prueba el login con una contraseña incorrecta: debe salir un mensaje de error y no entrar
+/heredia-front-audit http://mi-proyecto.test entra con el usuario de prueba, crea una tarea, márcala como hecha y bórrala
+/heredia-front-audit revisa que el formulario de contacto funcione en móvil y que no se pueda enviar vacío
+```
+
+| ¿Tienes cambios sin commit? | ¿Describiste un flujo? | Qué audita |
+|---|---|---|
+| Sí | No | Los flujos que tocan tus cambios. |
+| Sí | Sí | Primero lo que describiste, tal cual lo pediste; después el resto de flujos que tocan tus cambios. |
+| No (o el proyecto no usa git) | Sí | Solo lo que describiste, y revisa el código de esas pantallas. |
+| No (o el proyecto no usa git) | No | Te pregunta qué flujo quieres auditar. |
+
+Lo que pediste aparece arriba del reporte, en **Lo que pediste auditar**.
 
 Lo que pasa:
 
 1. **Contexto**: un script reúne la rama, los archivos cambiados y el diff, y crea una carpeta para
    esta auditoría.
-2. **Plan**: el agente identifica qué pantallas y flujos afectan tus cambios.
+2. **Plan**: empieza por lo que describiste (si describiste algo) y agrega las pantallas y flujos
+   que afectan tus cambios.
 3. **App**: usa tu URL, la de la auditoría anterior, o busca/arranca el servidor de desarrollo (y lo
    detiene al terminar si lo arrancó él).
 4. **Pruebas en el navegador**, con una captura por paso.
@@ -125,6 +151,84 @@ Lo que pasa:
 Si el agente te pregunta algo (la URL, un usuario de prueba), respóndele en el chat: solo lo
 pregunta una vez.
 
+## Lista de comandos
+
+### Instalar (en la terminal, una sola vez)
+
+```bash
+# Claude Code y Codex (los que tengas instalados) + navegador Playwright MCP. Recomendado.
+npx github:Ai-team-testing-grounds/heredia-front-audit
+
+# Solo Claude Code
+npx github:Ai-team-testing-grounds/heredia-front-audit --claude
+
+# Solo Codex
+npx github:Ai-team-testing-grounds/heredia-front-audit --codex
+
+# Sin registrar el navegador Playwright MCP
+npx github:Ai-team-testing-grounds/heredia-front-audit --no-playwright
+
+# Dentro del proyecto actual, para hacer commit y compartirlo con el equipo
+npx github:Ai-team-testing-grounds/heredia-front-audit --project
+
+# Actualizar a la última versión: el mismo comando de instalación otra vez
+npx github:Ai-team-testing-grounds/heredia-front-audit
+
+# Desinstalar
+npx github:Ai-team-testing-grounds/heredia-front-audit uninstall
+```
+
+Después de instalar o actualizar, **cierra y vuelve a abrir** Claude Code / Codex.
+
+<details>
+<summary>Alternativa: instalar como plugin de Claude Code (no lo combines con el instalador)</summary>
+
+Dentro de Claude Code:
+
+```text
+/plugin marketplace add Ai-team-testing-grounds/heredia-front-audit
+/plugin install heredia-front-audit@heredia-front-audit
+```
+
+El plugin ya incluye el navegador Playwright: no hay que configurar nada más. Como plugin, el comando completo es `/heredia-front-audit:heredia-front-audit` (también funciona
+`/heredia-front-audit` si ningún otro comando usa ese nombre). Para actualizar:
+`/plugin marketplace update heredia-front-audit`. Codex no tiene plugins para esto: usa el
+instalador con `npx`.
+
+</details>
+
+### Usar (dentro de Claude Code o Codex)
+
+| Para… | Claude Code | Codex |
+|---|---|---|
+| Auditar tus cambios sin commit | `/heredia-front-audit` | `$heredia-front-audit` |
+| Indicar la URL de la app | `/heredia-front-audit http://localhost:5173` | `$heredia-front-audit http://localhost:5173` |
+| Auditar un flujo que describes | `/heredia-front-audit prueba el login con contraseña incorrecta` | `$heredia-front-audit prueba el login con contraseña incorrecta` |
+| URL + flujo | `/heredia-front-audit http://mi-proyecto.test crea una tarea y bórrala` | `$heredia-front-audit http://mi-proyecto.test crea una tarea y bórrala` |
+| Instalado como plugin | `/heredia-front-audit:heredia-front-audit` + lo mismo de arriba | — |
+| Buscarlo en el menú | escribe `/` y busca `heredia-front-audit` | `/skills` → **Heredia Front Audit** |
+| Verificar después de corregir | vuelve a ejecutar `/heredia-front-audit` | vuelve a ejecutar `$heredia-front-audit` |
+
+### Ciclo de corrección
+
+1. En el reporte, marca los hallazgos y presiona **Copiar prompt de corrección**.
+2. Pégalo en el chat de Claude Code o Codex y deja que corrija.
+3. Ejecuta otra vez `/heredia-front-audit` (o `$heredia-front-audit`) para verificar.
+
+### Comandos útiles (en la terminal)
+
+```bash
+codex mcp list                   # Codex: ver si el navegador "playwright" está registrado
+claude mcp list                  # Claude Code: lo mismo (dentro de Claude Code también: /mcp)
+
+open .heredia-front-audit/latest.html    # macOS: abrir el último reporte
+start .heredia-front-audit\latest.html   # Windows: abrir el último reporte
+
+# Sin abrir el chat (CI o scripts): auditar y generar el reporte directamente
+claude -p "/heredia-front-audit http://localhost:3000"
+codex exec 'Usa el skill $heredia-front-audit con http://localhost:3000'
+```
+
 ## Según tu tipo de proyecto
 
 | Tu proyecto | Qué tienes que hacer |
@@ -133,7 +237,7 @@ pregunta una vez.
 | **Monolito o monorepo** (el frontend está en `frontend/`, `web/`, `apps/…`) | Nada. Detecta la carpeta de la app a partir de los archivos que cambiaste. Puedes abrir el agente en la raíz del repo. |
 | **Laravel / Symfony** | Si usas `php artisan serve` o `symfony serve`, lo arranca él (y `npm run dev` si las páginas cargan sin CSS/JS). Nunca ejecuta migraciones ni seeders sin preguntar. |
 | **PHP en Laragon, XAMPP, WAMP, MAMP, Valet o Herd** (incluye WordPress) | Prueba las URLs típicas (`http://<carpeta>.test`, `http://localhost/<carpeta>`). Si no la encuentra, pásale la URL la primera vez: `/heredia-front-audit http://mi-proyecto.test`. **Las siguientes veces la recuerda.** |
-| **App con login** | Te pide un usuario de prueba una vez. Con Claude in Chrome usa las sesiones que ya tienes abiertas. |
+| **App con login** | Te pide un usuario de prueba una vez. Usa uno de prueba, nunca tu contraseña real. |
 
 Para cada stack revisa lo que más suele fallar: dependencias de efectos e hidratación en React/Vue,
 suscripciones en Angular, salida sin escapar (`{!! !!}`, `|raw`, `echo` sin `htmlspecialchars`),
@@ -167,15 +271,22 @@ Cada auditoría se guarda en tu repo (sin aparecer en `git status`):
 
 ## El navegador: Claude Code y Codex
 
-El instalador registra **Playwright MCP**, que funciona en los dos agentes y abre su propio Chrome
-limpio. No tienes que hacer nada más.
+Los dos agentes usan **Playwright MCP**, que el instalador registra por ti. Abre su propia
+ventana de Chrome, limpia y separada de tu Chrome personal. **No tienes que activar nada más**, ni
+extensiones ni opciones de Chrome.
 
-| | Claude Code | Codex |
-|---|---|---|
-| **Por defecto** | Playwright MCP | Playwright MCP |
-| **Usar tu Chrome con tus sesiones iniciadas** | Sí: instala la [extensión de Claude](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) y abre el agente con `claude --chrome` (o `/chrome` → *Enabled by default*). Si está disponible, la herramienta la prefiere. | Solo en la **app de escritorio** de Codex/ChatGPT, no en la CLI. OpenAI recomienda el navegador integrado de la app para `localhost` ([documentación](https://learn.chatgpt.com/docs/chrome-extension)). |
+Si el agente no tiene navegador, igual revisa el código y en el reporte te explica cómo activarlo
+(normalmente basta con volver a ejecutar el instalador).
 
-Si el agente no tiene navegador, igual revisa el código y en el reporte te explica cómo activarlo.
+<details>
+<summary>Avanzado: usar tu propio Chrome en vez de Playwright</summary>
+
+No hace falta para el uso normal. Si Playwright no está disponible, la herramienta puede usar
+Claude in Chrome en Claude Code (la [extensión de Claude](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn)
+y `claude --chrome`). En Codex, la extensión de Chrome solo existe en la app de escritorio, no en
+la CLI ([documentación](https://learn.chatgpt.com/docs/chrome-extension)).
+
+</details>
 
 ## Instalarlo para todo el equipo en un proyecto
 
@@ -183,22 +294,24 @@ Si prefieres que el comando venga incluido en un repo (para que quien lo clone y
 
 ```bash
 cd tu-proyecto
-npx github:YOUR_GITHUB_USER/heredia-front-audit --project
+npx github:Ai-team-testing-grounds/heredia-front-audit --project
 git add .claude/skills/heredia-front-audit .agents/skills/heredia-front-audit
 git commit -m "Agregar /heredia-front-audit"
 ```
 
 ## Problemas frecuentes
 
-**"No uncommitted changes" / no hay cambios**: solo audita lo que no tiene commit. Si ya hiciste
-commit, `git reset --soft HEAD~1` devuelve el último commit a cambios sin commit, sin perder nada.
+**No tengo cambios sin commit**: describe el flujo que quieres probar:
+`/heredia-front-audit prueba el registro de usuarios`. Si no describes nada, te pregunta qué
+auditar. Si quieres auditar lo que ya subiste en el último commit, `git reset --soft HEAD~1` lo
+devuelve a cambios sin commit sin perder nada.
 
 **No aparece `/heredia-front-audit`**: cierra y vuelve a abrir Claude Code / Codex después de
 instalar. En Codex también puedes buscarlo en `/skills`.
 
-**El agente no tiene navegador**: en Claude Code revisa `/mcp` (debe aparecer `playwright`) o abre
-con `claude --chrome`. En Codex revisa con `codex mcp list`. Si falta, vuelve a ejecutar el
-instalador.
+**El agente no tiene navegador**: vuelve a ejecutar el instalador y reinicia el agente. Para
+comprobarlo: en Claude Code escribe `/mcp` (debe aparecer `playwright`); en Codex ejecuta
+`codex mcp list`.
 
 **No encuentra mi app (PHP con Laragon/XAMPP/etc.)**: pásale la URL una vez:
 `/heredia-front-audit http://mi-proyecto.test`. Queda recordada para las siguientes auditorías.
@@ -208,7 +321,7 @@ comando cuando te lo pida, o arranca tú el servidor y pásale la URL.
 
 **El reporte no se abrió**: ábrelo tú: `.heredia-front-audit/latest.html`.
 
-**Cambios muy grandes**: dale un foco: `/heredia-front-audit "solo la página de configuración"`.
+**Cambios muy grandes**: dile qué revisar: `/heredia-front-audit solo la página de configuración`.
 
 ---
 
